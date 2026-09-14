@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { adminFetch, uploadImage, IMAGE_PRESETS } from "@/lib/adminClient";
 import { Plus, Edit, Trash2, Upload, X } from "lucide-react";
 import { siteConfig } from "@/site.config";
+import ProductAttributesFields from "@/components/admin/ProductAttributesFields";
+import MultiPhotoImport from "@/components/admin/MultiPhotoImport";
 
 const V1 = siteConfig.product.variant1;
 const V2 = siteConfig.product.variant2;
@@ -11,6 +13,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
+  const [importing, setImporting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -29,6 +32,11 @@ export default function AdminProductsPage() {
   async function remove(id: string) {
     if (!confirm("Supprimer ce produit ?")) return;
     await adminFetch(`/api/products/${id}`, { method: "DELETE" });
+    load();
+  }
+
+  async function validate(id: string) {
+    await adminFetch(`/api/products/${id}`, { method: "PUT", body: JSON.stringify({ status: "available" }) });
     load();
   }
 
@@ -54,12 +62,20 @@ export default function AdminProductsPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="font-serif text-3xl">Produits</h1>
-        <button
-          onClick={() => setEditing(newProduct())}
-          className="flex items-center gap-2 rounded-sm bg-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--background)] hover:bg-[var(--primary-dark)]"
-        >
-          <Plus className="h-4 w-4" /> Nouveau
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setImporting(true)}
+            className="flex items-center gap-2 rounded-sm border border-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
+          >
+            <Upload className="h-4 w-4" /> Ajout multi-photos
+          </button>
+          <button
+            onClick={() => setEditing(newProduct())}
+            className="flex items-center gap-2 rounded-sm bg-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--background)] hover:bg-[var(--primary-dark)]"
+          >
+            <Plus className="h-4 w-4" /> Nouveau
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -90,7 +106,12 @@ export default function AdminProductsPage() {
                       )}
                       <div>
                         <p className="font-medium">{p.name}</p>
-                        {p.isNew && <span className="rounded bg-[var(--primary)] px-2 py-0.5 text-[9px] font-bold text-[var(--background)]">NEW</span>}
+                        <div className="flex gap-1.5">
+                          {p.isNew && <span className="rounded bg-[var(--primary)] px-2 py-0.5 text-[9px] font-bold text-[var(--background)]">NEW</span>}
+                          {p.aiGenerated?.description && (
+                            <span className="rounded bg-[var(--primary)]/10 px-2 py-0.5 text-[9px] font-bold text-[var(--primary)]">VIA IA</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -98,11 +119,24 @@ export default function AdminProductsPage() {
                   <td className="px-4 py-3 text-right font-semibold">{p.basePrice.toFixed(2)}€</td>
                   <td className="px-4 py-3 text-center text-xs text-gray-500">{p.delay || 2}h</td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] ${p.status === "available" ? "bg-green-100 text-green-700" : "bg-gray-50 text-gray-500"}`}>
-                      {p.status}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] ${
+                        p.status === "available"
+                          ? "bg-green-100 text-green-700"
+                          : p.status === "pending"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-gray-50 text-gray-500"
+                      }`}
+                    >
+                      {p.status === "pending" ? "à valider" : p.status}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
+                    {p.status === "pending" && (
+                      <button onClick={() => validate(p._id)} className="mr-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--primary)] hover:underline">
+                        Valider
+                      </button>
+                    )}
                     <button onClick={() => setEditing({ ...p, category: p.category?._id || "" })} className="mr-2 text-[var(--primary)]">
                       <Edit className="h-4 w-4" />
                     </button>
@@ -118,6 +152,7 @@ export default function AdminProductsPage() {
       )}
 
       {editing && <ProductModal initial={editing} categories={categories} onClose={() => setEditing(null)} onSaved={load} />}
+      {importing && <MultiPhotoImport categories={categories} onClose={() => setImporting(false)} onImported={load} />}
     </div>
   );
 }
@@ -263,6 +298,7 @@ function ProductModal({ initial, categories, onClose, onSaved }: { initial: any;
                 <option value="available">Disponible</option>
                 <option value="unavailable">Indisponible</option>
                 <option value="soon">Bientôt</option>
+                <option value="pending">À valider</option>
               </select>
             </div>
             <label className="flex items-center gap-2 pt-6">
@@ -415,6 +451,14 @@ function ProductModal({ initial, categories, onClose, onSaved }: { initial: any;
             </div>
           </div>
           )}
+
+          <div className="rounded-xl border border-gray-200 p-4">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider">Attributs de la pièce</h3>
+            <ProductAttributesFields
+              value={{ jewelryType: form.jewelryType, dimensionValue: form.dimensionValue, stone: form.stone }}
+              onChange={(patch) => setForm({ ...form, ...patch })}
+            />
+          </div>
         </div>
 
         {error && <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
