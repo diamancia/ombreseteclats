@@ -16,54 +16,100 @@ export default function AdminCategoriesPage() {
   }, []);
 
   async function remove(id: string) {
-    if (!confirm("Supprimer cette catégorie ?")) return;
+    if (!confirm("Supprimer cette catégorie ? Ses sous-catégories resteront mais perdront leur rattachement.")) return;
     await adminFetch(`/api/categories/${id}`, { method: "DELETE" });
     load();
   }
 
+  const topLevel = cats.filter((c) => !c.parent);
+  const childrenOf = (parentId: string) => cats.filter((c) => c.parent === parentId);
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="font-serif text-3xl">Catégories</h1>
+        <div>
+          <h1 className="font-serif text-3xl">Catégories</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Créez des catégories principales, puis des sous-catégories rattachées à l&apos;une d&apos;elles.
+          </p>
+        </div>
         <button
-          onClick={() => setEditing({ name: "", emoji: "", imageUrl: "", active: true })}
+          onClick={() => setEditing({ name: "", emoji: "", imageUrl: "", active: true, parent: "" })}
           className="flex items-center gap-2 rounded-sm bg-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--background)] hover:bg-[var(--primary-dark)]"
         >
           <Plus className="h-4 w-4" /> Nouvelle
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cats.map((c) => (
-          <div key={c._id} className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
-            <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-full bg-white">
-              {c.imageUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={c.imageUrl} alt={c.name} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-2xl">{c.emoji}</div>
-              )}
-            </div>
-            <div className="flex-1">
-              <h3 className="font-medium">{c.name}</h3>
-              <p className="text-xs text-gray-500">{c.active ? "Active" : "Inactive"}</p>
-            </div>
-            <button onClick={() => setEditing(c)} className="text-[var(--primary)]">
-              <Edit className="h-4 w-4" />
-            </button>
-            <button onClick={() => remove(c._id)} className="text-red-600">
-              <Trash2 className="h-4 w-4" />
-            </button>
+      <div className="space-y-6">
+        {topLevel.map((c) => (
+          <div key={c._id}>
+            <CategoryRow cat={c} onEdit={() => setEditing({ ...c, parent: c.parent || "" })} onRemove={() => remove(c._id)} />
+            {childrenOf(c._id).length > 0 && (
+              <div className="ml-10 mt-3 space-y-3 border-l-2 border-[var(--accent)] pl-4">
+                {childrenOf(c._id).map((sub) => (
+                  <CategoryRow
+                    key={sub._id}
+                    cat={sub}
+                    onEdit={() => setEditing({ ...sub, parent: sub.parent || "" })}
+                    onRemove={() => remove(sub._id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         ))}
+        {cats.length === 0 && <p className="text-gray-400">Aucune catégorie pour l&apos;instant.</p>}
       </div>
 
-      {editing && <CategoryModal initial={editing} onClose={() => setEditing(null)} onSaved={load} />}
+      {editing && (
+        <CategoryModal
+          initial={editing}
+          parentOptions={topLevel.filter((c) => c._id !== editing._id)}
+          onClose={() => setEditing(null)}
+          onSaved={load}
+        />
+      )}
     </div>
   );
 }
 
-function CategoryModal({ initial, onClose, onSaved }: { initial: any; onClose: () => void; onSaved: () => void }) {
+function CategoryRow({ cat, onEdit, onRemove }: { cat: any; onEdit: () => void; onRemove: () => void }) {
+  return (
+    <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
+      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-full bg-white">
+        {cat.imageUrl ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={cat.imageUrl} alt={cat.name} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-2xl">{cat.emoji}</div>
+        )}
+      </div>
+      <div className="flex-1">
+        <h3 className="font-medium">{cat.name}</h3>
+        <p className="text-xs text-gray-500">{cat.active ? "Active" : "Inactive"}</p>
+      </div>
+      <button onClick={onEdit} className="text-[var(--primary)]">
+        <Edit className="h-4 w-4" />
+      </button>
+      <button onClick={onRemove} className="text-red-600">
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+function CategoryModal({
+  initial,
+  parentOptions,
+  onClose,
+  onSaved,
+}: {
+  initial: any;
+  parentOptions: any[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -73,10 +119,11 @@ function CategoryModal({ initial, onClose, onSaved }: { initial: any; onClose: (
     setSaving(true);
     setError(null);
     try {
+      const payload = { ...form, parent: form.parent || null };
       if (form._id) {
-        await adminFetch(`/api/categories/${form._id}`, { method: "PUT", body: JSON.stringify(form) });
+        await adminFetch(`/api/categories/${form._id}`, { method: "PUT", body: JSON.stringify(payload) });
       } else {
-        await adminFetch("/api/categories", { method: "POST", body: JSON.stringify(form) });
+        await adminFetch("/api/categories", { method: "POST", body: JSON.stringify(payload) });
       }
       onSaved();
       onClose();
@@ -114,6 +161,21 @@ function CategoryModal({ initial, onClose, onSaved }: { initial: any; onClose: (
           <div>
             <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Nom *</label>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none" />
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Catégorie parente</label>
+            <select
+              value={form.parent || ""}
+              onChange={(e) => setForm({ ...form, parent: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-[var(--primary)] focus:outline-none"
+            >
+              <option value="">Aucune (catégorie principale)</option>
+              {parentOptions.map((p) => (
+                <option key={p._id} value={p._id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Image de la catégorie</label>

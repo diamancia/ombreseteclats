@@ -15,7 +15,8 @@ async function loadData() {
   await connectDb();
   const [products, categories, settingsDoc] = await Promise.all([
     Product.find().populate("category").sort({ createdAt: -1 }).lean(),
-    Category.find({ active: true }).sort("name").lean(),
+    // Catégories principales uniquement — les sous-catégories se découvrent depuis le catalogue.
+    Category.find({ active: true, parent: null }).sort("name").lean(),
     Settings.findOne().lean(),
   ]);
   const settings: any = settingsDoc || {};
@@ -39,18 +40,19 @@ export default async function HomePage() {
       <Navbar brandName={brandName} navLinks={settings.navLinks} />
       <Cart />
       <main className="min-h-screen">
-        {/* Hero — texte justifié à gauche, chevalière argent à droite */}
-        <section className="relative overflow-hidden bg-black">
+        {/* Hero — fond noir fixe dans les deux thèmes (identité de marque), texte donc en
+            couleur fixe plutôt que --foreground qui, lui, bascule avec le mode clair/sombre. */}
+        <section className="relative overflow-hidden bg-black text-[#f5f1e8]">
           <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:gap-16 lg:py-28">
             {/* Texte */}
             <div className="flex flex-col">
               <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.4em] text-[var(--primary)]">
                 Spécial Argent 925
               </p>
-              <h1 className="font-serif text-4xl leading-[1.05] text-[var(--foreground)] sm:text-5xl lg:text-6xl">
+              <h1 className="font-serif text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">
                 {heroTitle}
               </h1>
-              <p className="mt-8 max-w-xl text-justify text-base leading-relaxed text-[var(--foreground)]/70">
+              <p className="mt-8 max-w-xl text-justify text-base leading-relaxed text-[#f5f1e8]/70">
                 {heroSubtitle}
               </p>
               <div className="mt-10 flex flex-wrap gap-3">

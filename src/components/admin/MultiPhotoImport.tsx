@@ -48,8 +48,17 @@ export default function MultiPhotoImport({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [batchGender, setBatchGender] = useState<ImportItem["gender"]>("femme");
+  const [batchCategory, setBatchCategory] = useState("");
   const itemsRef = useRef<ImportItem[]>([]);
   itemsRef.current = items;
+
+  const topLevelCats = categories.filter((c) => !c.parent);
+  const subCatsOf = (parentId: string) => categories.filter((c) => c.parent === parentId);
+
+  function applyBatchToAll() {
+    setItems((prev) => prev.map((it) => ({ ...it, gender: batchGender, category: batchCategory || it.category })));
+  }
 
   useEffect(() => {
     return () => {
@@ -98,8 +107,8 @@ export default function MultiPhotoImport({
       previewUrl: URL.createObjectURL(file),
       name: fileNameToProductName(file.name),
       basePrice: 0,
-      category: "",
-      gender: "homme",
+      category: batchCategory,
+      gender: batchGender,
       shortDesc: "",
       longDesc: "",
       hashtags: [],
@@ -171,6 +180,48 @@ export default function MultiPhotoImport({
           </button>
         </div>
 
+        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl bg-gray-50 p-4">
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              Collection (par défaut pour ce lot)
+            </label>
+            <select
+              value={batchGender}
+              onChange={(e) => setBatchGender(e.target.value as ImportItem["gender"])}
+              className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900"
+            >
+              <option value="homme">Homme</option>
+              <option value="femme">Femme</option>
+              <option value="mixte">Mixte</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              Catégorie (par défaut pour ce lot)
+            </label>
+            <CategorySelect
+              value={batchCategory}
+              onChange={setBatchCategory}
+              topLevelCats={topLevelCats}
+              subCatsOf={subCatsOf}
+            />
+          </div>
+          {items.length > 0 && (
+            <button
+              type="button"
+              onClick={applyBatchToAll}
+              className="rounded-sm border border-[var(--primary)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white"
+            >
+              Appliquer à toutes les photos déjà ajoutées
+            </button>
+          )}
+        </div>
+        <p className="mb-4 text-xs text-gray-400">
+          Utile pour importer la collection Femme catégorie par catégorie : choisis "Femme" +
+          "Bagues" ci-dessus, puis glisse toutes les photos de bagues — chaque nouvelle photo
+          reprend ces réglages automatiquement, modifiables ensuite par photo si besoin.
+        </p>
+
         <div
           {...getRootProps()}
           className={`mb-6 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
@@ -207,18 +258,14 @@ export default function MultiPhotoImport({
                           onChange={(e) => updateItem(it.id, { basePrice: parseFloat(e.target.value) || 0 })}
                           className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 focus:border-[var(--primary)] focus:outline-none"
                         />
-                        <select
-                          value={it.category}
-                          onChange={(e) => updateItem(it.id, { category: e.target.value })}
-                          className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 focus:border-[var(--primary)] focus:outline-none"
-                        >
-                          <option value="">Catégorie…</option>
-                          {categories.map((c) => (
-                            <option key={c._id} value={c._id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex-1">
+                          <CategorySelect
+                            value={it.category}
+                            onChange={(v) => updateItem(it.id, { category: v })}
+                            topLevelCats={topLevelCats}
+                            subCatsOf={subCatsOf}
+                          />
+                        </div>
                       </div>
                       <select
                         value={it.gender}
@@ -323,5 +370,47 @@ export default function MultiPhotoImport({
         </div>
       </div>
     </div>
+  );
+}
+
+function CategorySelect({
+  value,
+  onChange,
+  topLevelCats,
+  subCatsOf,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  topLevelCats: any[];
+  subCatsOf: (parentId: string) => any[];
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-[var(--primary)] focus:outline-none"
+    >
+      <option value="">Catégorie…</option>
+      {topLevelCats.map((c) => {
+        const subs = subCatsOf(c._id);
+        if (subs.length === 0) {
+          return (
+            <option key={c._id} value={c._id}>
+              {c.name}
+            </option>
+          );
+        }
+        return (
+          <optgroup key={c._id} label={c.name}>
+            <option value={c._id}>{c.name} (général)</option>
+            {subs.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.name}
+              </option>
+            ))}
+          </optgroup>
+        );
+      })}
+    </select>
   );
 }

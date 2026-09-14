@@ -37,8 +37,23 @@ export default async function CataloguePage({
 }) {
   const sp = await searchParams;
   const { products, categories, settings } = await loadData();
+
+  const topLevelCats = categories.filter((c: any) => !c.parent);
+  const selectedCat = sp.cat ? categories.find((c: any) => c._id === sp.cat) : undefined;
+  // La rangée de sous-catégories s'affiche sous le parent sélectionné, ou sous le parent
+  // de la sous-catégorie déjà sélectionnée (pour rester dans le même groupe).
+  const activeParentId = selectedCat ? selectedCat.parent || selectedCat._id : undefined;
+  const subCats = activeParentId ? categories.filter((c: any) => c.parent === activeParentId) : [];
+  // Sélectionner une catégorie principale inclut ses sous-catégories, pour ne pas afficher
+  // une grille vide quand les produits sont tous rangés dans les sous-catégories.
+  const matchingCatIds = selectedCat
+    ? selectedCat.parent
+      ? [selectedCat._id]
+      : [selectedCat._id, ...categories.filter((c: any) => c.parent === selectedCat._id).map((c: any) => c._id)]
+    : null;
+
   const filtered = products
-    .filter((p: any) => !sp.cat || p.category?._id === sp.cat)
+    .filter((p: any) => !matchingCatIds || matchingCatIds.includes(p.category?._id))
     .filter((p: any) => !sp.genre || (p.gender || "homme") === sp.genre);
 
   return (
@@ -80,7 +95,7 @@ export default async function CataloguePage({
             })}
           </div>
 
-          <div className="mb-10 flex flex-wrap justify-center gap-3">
+          <div className="mb-4 flex flex-wrap justify-center gap-3">
             <Link
               href={catalogueHref({ genre: sp.genre })}
               className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
@@ -91,12 +106,12 @@ export default async function CataloguePage({
             >
               Toutes les catégories
             </Link>
-            {categories.map((c: any) => (
+            {topLevelCats.map((c: any) => (
               <Link
                 key={c._id}
                 href={catalogueHref({ cat: c._id, genre: sp.genre })}
                 className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
-                  sp.cat === c._id
+                  sp.cat === c._id || c._id === activeParentId
                     ? "bg-[var(--primary)] text-[var(--background)]"
                     : "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
                 }`}
@@ -105,6 +120,24 @@ export default async function CataloguePage({
               </Link>
             ))}
           </div>
+
+          {subCats.length > 0 && (
+            <div className="mb-10 flex flex-wrap justify-center gap-2">
+              {subCats.map((c: any) => (
+                <Link
+                  key={c._id}
+                  href={catalogueHref({ cat: c._id, genre: sp.genre })}
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
+                    sp.cat === c._id
+                      ? "bg-[var(--accent)] text-[var(--primary)] ring-1 ring-[var(--primary)]"
+                      : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
+                  }`}
+                >
+                  {c.name}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {filtered.length === 0 ? (
             <p className="py-20 text-center text-[var(--foreground)]/60">Aucun produit dans cette catégorie</p>
