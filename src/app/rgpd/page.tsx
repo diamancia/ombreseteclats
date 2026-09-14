@@ -46,7 +46,7 @@ export default async function RgpdPage() {
           )}
         </div>
       </main>
-      <Footer brandName={brand} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
+      <Footer brandName={brand} navLinks={settings.navLinks} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
       {siteConfig.features.whatsappButton && <ContactButton phone={settings.phone} />}
     </>
   );

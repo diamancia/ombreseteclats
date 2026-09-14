@@ -102,6 +102,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </main>
       <Footer
         brandName={brandName}
+        navLinks={(settings as any)?.navLinks}
         socialLinks={(settings as any)?.socialLinks}
         email={(settings as any)?.email}
         phone={(settings as any)?.phone}

@@ -1,23 +1,25 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
-import OrderForm from "@/components/OrderForm";
 import ContactButton from "@/components/ContactButton";
 import { connectDb } from "@/lib/mongoose";
 import { Settings } from "@/lib/models";
 import { siteConfig } from "@/site.config";
+import { getLegalPreset } from "@/lib/legalPresets";
 
 export const dynamic = "force-dynamic";
 
-export default async function CommanderPage() {
+export default async function CgvPage() {
   await connectDb();
   const s = await Settings.findOne().lean();
   const settings: any = JSON.parse(JSON.stringify(s || {}));
+  const cgv = settings.cgv?.trim() || getLegalPreset().cgv;
+  const brand = settings.brandName || siteConfig.brand.name;
 
   return (
     <>
       <Navbar
-        brandName={settings.brandName}
+        brandName={brand}
         navLinks={settings.navLinks}
         announcements={settings.announcements}
         socialLinks={settings.socialLinks}
@@ -27,16 +29,23 @@ export default async function CommanderPage() {
       <main className="min-h-screen bg-[var(--background)] py-16">
         <div className="mx-auto max-w-3xl px-6">
           <div className="mb-10 flex flex-col items-center">
-            <h1 className="font-serif text-5xl tracking-wider">COMMANDER</h1>
+            <h1 className="font-serif text-5xl tracking-wider">CONDITIONS GÉNÉRALES</h1>
             <div className="mt-3 h-px w-16 bg-[var(--primary)]" />
-            <p className="mt-4 text-center text-sm text-[var(--foreground)]/60">
-              Retrait uniquement à notre atelier · Délai minimum {settings.minDelay || 2}h
-            </p>
+            <p className="mt-4 text-sm text-[var(--foreground)]/60">Conditions générales de vente</p>
           </div>
-          <OrderForm settings={settings} />
+          <div className="rounded-2xl bg-[var(--muted)] p-8 text-sm leading-relaxed text-[var(--foreground)]/80 shadow-sm whitespace-pre-line">
+            {cgv}
+          </div>
         </div>
       </main>
-      <Footer brandName={settings.brandName} navLinks={settings.navLinks} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
+      <Footer
+        brandName={brand}
+        navLinks={settings.navLinks}
+        socialLinks={settings.socialLinks}
+        email={settings.email}
+        phone={settings.phone}
+        address={settings.address}
+      />
       {siteConfig.features.whatsappButton && <ContactButton phone={settings.phone} />}
     </>
   );

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Package, Tag, ClipboardList, Settings as SettingsIcon, LogOut, Home, Users, Bell } from "lucide-react";
+import { LayoutDashboard, Package, Tag, ClipboardList, Settings as SettingsIcon, LogOut, Home, Users, Bell, ChevronLeft, ChevronRight } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import { TOKEN_KEY, USER_KEY } from "@/lib/storage";
 import { PermissionKey } from "@/lib/modules";
@@ -25,6 +25,18 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState<StoredUser | null>(null);
   const [unread, setUnread] = useState(0);
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem("admin_sidebar_collapsed") === "1") setCollapsed(true);
+  }, []);
+
+  function toggleCollapse() {
+    setCollapsed((c) => {
+      localStorage.setItem("admin_sidebar_collapsed", c ? "0" : "1");
+      return !c;
+    });
+  }
 
   useEffect(() => {
     if (pathname === "/admin/login") {
@@ -79,13 +91,35 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         "--muted": "#f7f7fa",
       } as React.CSSProperties}
     >
-      <aside className="w-64 border-r border-gray-200 bg-[#1a1a2e]">
-        <div className="border-b border-white/10 p-6">
-          <Link href="/admin" className="font-serif text-2xl text-white">
-            {siteConfig.brand.name} <span className="text-[#a29bfe]">Admin</span>
-          </Link>
+      <aside
+        className={`sticky top-0 z-20 flex h-screen flex-shrink-0 flex-col border-r border-black/20 bg-[#1a1a2e] shadow-2xl transition-[width] duration-200 ${
+          collapsed ? "w-[72px]" : "w-64"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-2 border-b border-white/10 p-4">
+          {!collapsed && (
+            <Link href="/admin" className="truncate font-serif text-xl text-white">
+              {siteConfig.brand.name} <span className="text-[#a29bfe]">Admin</span>
+            </Link>
+          )}
+          {collapsed && (
+            <Link
+              href="/admin"
+              className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-[#6c5ce7] font-serif text-sm text-white"
+              title={siteConfig.brand.name}
+            >
+              {siteConfig.brand.name.charAt(0)}
+            </Link>
+          )}
+          <button
+            onClick={toggleCollapse}
+            title={collapsed ? "Déplier le menu" : "Replier le menu"}
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-white/50 hover:bg-white/10 hover:text-white"
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </button>
         </div>
-        <nav className="space-y-1 p-3">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {visibleNav.map((n) => {
             const active = pathname === n.href;
             const Icon = n.icon;
@@ -93,33 +127,43 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               <Link
                 key={n.href}
                 href={n.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-[#6c5ce7] text-white"
-                    : "text-white/70 hover:bg-white/10 hover:text-white"
-                }`}
+                title={collapsed ? n.label : undefined}
+                className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  collapsed ? "justify-center" : ""
+                } ${active ? "bg-[#6c5ce7] text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
               >
-                <Icon className="h-4 w-4" />
-                {n.label}
-                {n.href === "/admin/notifications" && unread > 0 && (
+                <Icon className="h-4 w-4 flex-shrink-0" />
+                {!collapsed && n.label}
+                {n.href === "/admin/notifications" && unread > 0 && !collapsed && (
                   <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white">
                     {unread}
                   </span>
+                )}
+                {n.href === "/admin/notifications" && unread > 0 && collapsed && (
+                  <span className="absolute right-2 top-1.5 h-2 w-2 rounded-full bg-red-500" />
                 )}
               </Link>
             );
           })}
         </nav>
         <div className="border-t border-white/10 p-3">
-          <Link href="/" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/50 hover:bg-white/10 hover:text-white">
-            <Home className="h-4 w-4" /> Voir le site
+          <Link
+            href="/"
+            title={collapsed ? "Voir le site" : undefined}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/50 hover:bg-white/10 hover:text-white ${collapsed ? "justify-center" : ""}`}
+          >
+            <Home className="h-4 w-4 flex-shrink-0" /> {!collapsed && "Voir le site"}
           </Link>
-          <button onClick={logout} className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-400 hover:bg-red-900/20">
-            <LogOut className="h-4 w-4" /> Déconnexion
+          <button
+            onClick={logout}
+            title={collapsed ? "Déconnexion" : undefined}
+            className={`mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 ${collapsed ? "justify-center" : ""}`}
+          >
+            <LogOut className="h-4 w-4 flex-shrink-0" /> {!collapsed && "Déconnexion"}
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto bg-[var(--muted)] p-10 text-[var(--foreground)]">{children}</main>
+      <main className="min-w-0 flex-1 overflow-auto bg-[var(--muted)] p-10 text-[var(--foreground)]">{children}</main>
     </div>
   );
 }

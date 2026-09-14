@@ -216,7 +216,7 @@ export default async function HomePage() {
           </div>
         </section>
       </main>
-      <Footer brandName={brandName} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
+      <Footer brandName={brandName} navLinks={settings.navLinks} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
 
       {siteConfig.features.whatsappButton && <ContactButton phone={settings.phone} />}
     </>

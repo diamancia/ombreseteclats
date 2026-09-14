@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { adminFetch, uploadImage, IMAGE_PRESETS } from "@/lib/adminClient";
-import { Upload, Save, Plus, Trash2 } from "lucide-react";
+import { Upload, Save, Plus, Trash2, Pencil, X } from "lucide-react";
 import { MODULES } from "@/lib/modules";
 import { SOCIAL_PLATFORMS, SocialIcon, normalizePlatformKey } from "@/components/SocialIcon";
 import { DEFAULT_METAL_TYPES, DEFAULT_GOLD_COLORS, MetalType, GoldColor } from "@/lib/metals";
@@ -13,6 +13,7 @@ export default function AdminSettingsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [uploadingHero, setUploadingHero] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [navModalOpen, setNavModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings").then((r) => r.json()).then(setSettings);
@@ -86,8 +87,35 @@ export default function AdminSettingsPage() {
         </div>
 
         <Card title="Navigation (barre du haut)">
-          <NavLinksEditor value={settings.navLinks || []} onChange={(v) => setSettings({ ...settings, navLinks: v })} />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              {(settings.navLinks || []).length === 0 ? (
+                <p className="text-xs text-gray-400">Aucun lien — clique sur Modifier pour en ajouter.</p>
+              ) : (
+                (settings.navLinks || []).map((l: NavLink, i: number) => (
+                  <span key={`${l.href}-${i}`} className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
+                    {l.label || "(sans titre)"}
+                  </span>
+                ))
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setNavModalOpen(true)}
+              className="flex flex-shrink-0 items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
+            >
+              <Pencil className="h-3 w-3" /> Modifier
+            </button>
+          </div>
         </Card>
+
+        {navModalOpen && (
+          <NavigationEditorModal
+            value={settings.navLinks || []}
+            onChange={(v) => setSettings({ ...settings, navLinks: v })}
+            onClose={() => setNavModalOpen(false)}
+          />
+        )}
 
         <Card title="Bandeau défilant (annonces & promotions)">
           <p className="text-xs text-gray-400">
@@ -269,6 +297,40 @@ export default function AdminSettingsPage() {
           </div>
         </Card>
 
+        <Card title="Mentions légales (footer)">
+          <p className="text-xs text-gray-400">
+            Affichées sur /cgv, /rgpd et /cookies (liés depuis le pied de page). Laisse vide pour
+            garder un texte par défaut adapté à une bijouterie.
+          </p>
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Conditions générales de vente</label>
+            <textarea
+              rows={5}
+              value={settings.cgv || ""}
+              onChange={(e) => setSettings({ ...settings, cgv: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Confidentialité (RGPD)</label>
+            <textarea
+              rows={5}
+              value={settings.rgpd || ""}
+              onChange={(e) => setSettings({ ...settings, rgpd: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Politique de cookies</label>
+            <textarea
+              rows={3}
+              value={settings.cookiesPolicy || ""}
+              onChange={(e) => setSettings({ ...settings, cookiesPolicy: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
+            />
+          </div>
+        </Card>
+
         <Card title="Métaux & couleurs">
           <p className="text-xs text-gray-400">
             Métaux vendus (utilisés comme filtre boutique et dans l&apos;import produit) et
@@ -416,7 +478,15 @@ function ClosedDatesPicker({ value, onChange }: { value: string[]; onChange: (v:
 
 type NavLink = { href: string; label: string };
 
-function NavLinksEditor({ value, onChange }: { value: NavLink[]; onChange: (v: NavLink[]) => void }) {
+function NavigationEditorModal({
+  value,
+  onChange,
+  onClose,
+}: {
+  value: NavLink[];
+  onChange: (v: NavLink[]) => void;
+  onClose: () => void;
+}) {
   function update(idx: number, patch: Partial<NavLink>) {
     onChange(value.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
   }
@@ -430,43 +500,102 @@ function NavLinksEditor({ value, onChange }: { value: NavLink[]; onChange: (v: N
     [next[idx], next[target]] = [next[target], next[idx]];
     onChange(next);
   }
+  function add() {
+    onChange([...value, { href: "/", label: "Nouveau lien" }]);
+  }
 
   return (
-    <div className="space-y-2">
-      {value.map((l, i) => (
-        <div key={i} className="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
-          <div className="flex flex-col">
-            <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">
-              ▲
-            </button>
-            <button type="button" onClick={() => move(i, 1)} disabled={i === value.length - 1} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">
-              ▼
-            </button>
-          </div>
-          <input
-            placeholder="Libellé"
-            value={l.label}
-            onChange={(e) => update(i, { label: e.target.value })}
-            className="w-40 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
-          />
-          <input
-            placeholder="/chemin"
-            value={l.href}
-            onChange={(e) => update(i, { href: e.target.value })}
-            className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
-          />
-          <button type="button" onClick={() => remove(i)} className="text-red-600">
-            <Trash2 className="h-4 w-4" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div
+        className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-gray-100 p-5">
+          <h3 className="font-serif text-lg text-gray-900">Barre de navigation</h3>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-700">
+            <X className="h-5 w-5" />
           </button>
         </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => onChange([...value, { href: "/", label: "Nouveau lien" }])}
-        className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
-      >
-        <Plus className="h-3 w-3" /> Ajouter un lien de navigation
-      </button>
+
+        <div className="p-6">
+          <p className="mb-4 text-xs text-gray-400">
+            Aperçu tel qu&apos;affiché sur le site — clique directement sur un libellé pour le
+            modifier. Survole un lien pour le déplacer ou le supprimer.
+          </p>
+
+          <div className="overflow-x-auto rounded-lg bg-black p-5">
+            <div className="flex min-w-max items-center gap-6">
+              {value.map((l, i) => (
+                <div key={i} className="group relative pt-7">
+                  <div className="absolute left-1/2 top-0 hidden -translate-x-1/2 items-center gap-1 group-hover:flex">
+                    <button
+                      type="button"
+                      onClick={() => move(i, -1)}
+                      disabled={i === 0}
+                      className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-white hover:bg-white/20 disabled:opacity-20"
+                    >
+                      ◀
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => move(i, 1)}
+                      disabled={i === value.length - 1}
+                      className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-white hover:bg-white/20 disabled:opacity-20"
+                    >
+                      ▶
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(i)}
+                      className="rounded bg-red-500/80 px-1.5 py-0.5 text-[10px] text-white hover:bg-red-500"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <input
+                    value={l.label}
+                    onChange={(e) => update(i, { label: e.target.value })}
+                    size={Math.max(l.label.length, 4)}
+                    className="border-b border-transparent bg-transparent text-center text-sm font-medium uppercase tracking-wider text-[#f5f1e8] outline-none focus:border-[#c9c0ad]"
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={add}
+                title="Ajouter un lien"
+                className="mt-7 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-dashed border-white/30 text-white/50 hover:border-white hover:text-white"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-2">
+            {value.map((l, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="w-28 flex-shrink-0 truncate text-xs font-medium text-gray-500">{l.label || "(sans titre)"}</span>
+                <input
+                  placeholder="/chemin"
+                  value={l.href}
+                  onChange={(e) => update(i, { href: e.target.value })}
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end border-t border-gray-100 p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-sm bg-[var(--primary)] px-6 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--background)] hover:bg-[var(--primary-dark)]"
+          >
+            Terminé
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

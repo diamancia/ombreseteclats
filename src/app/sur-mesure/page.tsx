@@ -42,7 +42,7 @@ export default async function SurMesurePage() {
           <CustomOrderForm settings={settings} />
         </div>
       </main>
-      <Footer brandName={settings.brandName} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
+      <Footer brandName={settings.brandName} navLinks={settings.navLinks} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
       {siteConfig.features.whatsappButton && <ContactButton phone={settings.phone} />}
     </>
   );
