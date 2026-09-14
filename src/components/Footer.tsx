@@ -56,7 +56,7 @@ export default function Footer({
       )}
       <div className="border-t border-[var(--accent)] py-5 text-center text-xs text-[var(--foreground)]/50">
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link href="/a-propos" className="hover:text-[var(--primary)]">À propos</Link>
+          <Link href="/#a-propos" className="hover:text-[var(--primary)]">À propos</Link>
           <span aria-hidden="true">·</span>
           <Link href="/contact" className="hover:text-[var(--primary)]">Contact</Link>
           <span aria-hidden="true">·</span>

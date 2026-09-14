@@ -112,9 +112,9 @@ export const siteConfig: SiteConfig = {
   },
 
   meta: {
-    title: "Ombre & Éclats — Bijouterie d'Homme en Argent Massif",
+    title: "Ombre & Éclats - Bijoux argent massif 925 pour homme | Livraison offerte",
     description:
-      "Bagues, chevalières et gourmettes en argent massif 925, façonnées à la main. Livraison en 48h en France.",
+      "Découvrez Ombre & Éclats, notre sélection de bagues, chevalières et gourmettes en argent massif 925 façonnées à la main. Livraison rapide, paiement sécurisé.",
   },
 
   hero: {
@@ -137,7 +137,7 @@ export const siteConfig: SiteConfig = {
       { href: "/catalogue?genre=homme", label: "Collections Homme" },
       { href: "/catalogue?genre=femme", label: "Collections Femme" },
       { href: "/sur-mesure", label: "Sur-mesure" },
-      { href: "/a-propos", label: "Maison" },
+      { href: "/#a-propos", label: "À propos" },
       { href: "/contact", label: "Contact" },
     ],
   },

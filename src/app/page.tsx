@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Truck, Award, Gem, MessageCircle } from "lucide-react";
+import { Truck, Award, Gem, MessageCircle, Hammer } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
@@ -8,6 +8,7 @@ import ProductCard from "@/components/ProductCard";
 import { connectDb } from "@/lib/mongoose";
 import { Product, Category, Settings } from "@/lib/models";
 import { siteConfig } from "@/site.config";
+import { getLegalPreset } from "@/lib/legalPresets";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ export default async function HomePage() {
   const heroImage = settings.heroImageUrl || siteConfig.hero.defaultImageUrl;
   const heroTitle = settings.heroTitle || siteConfig.hero.defaultTitle;
   const heroSubtitle = settings.heroSubtitle || siteConfig.hero.defaultSubtitle;
+  const about = settings.about?.trim() || getLegalPreset().about;
 
   return (
     <>
@@ -208,6 +210,29 @@ export default async function HomePage() {
           </div>
         </section>
         )}
+
+        {/* À propos — fusionnée depuis l'ancienne page /a-propos (supprimée : éviter le
+            contenu dupliqué sur deux pages, cf. recommandations SEO). Section secondaire
+            (H2), volontairement compacte pour ne pas concurrencer les produits. */}
+        <section id="a-propos" className="scroll-mt-24 border-t border-[var(--accent)] py-20">
+          <div className="mx-auto max-w-5xl px-6">
+            <div className="mb-10 flex flex-col items-center text-center">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--primary)]">
+                Notre histoire
+              </p>
+              <h2 className="font-serif text-3xl tracking-wider">À PROPOS DE {brandName.toUpperCase()}</h2>
+              <div className="mt-3 h-px w-16 bg-[var(--primary)]" />
+            </div>
+            <div className="mx-auto max-w-2xl whitespace-pre-line text-center text-sm leading-relaxed text-[var(--foreground)]/75">
+              {about}
+            </div>
+            <div className="mx-auto mt-10 grid max-w-3xl gap-6 sm:grid-cols-3">
+              <Value icon={<Hammer className="h-5 w-5" />} title="Façonné main" text="Chaque pièce travaillée dans notre atelier." />
+              <Value icon={<Gem className="h-5 w-5" />} title="Argent 925 poinçonné" text="Matière noble garantie à vie." />
+              <Value icon={<Award className="h-5 w-5" />} title="Pièces intemporelles" text="Lignes épurées pensées pour durer." />
+            </div>
+          </div>
+        </section>
       </main>
       <Footer brandName={brandName} socialLinks={settings.socialLinks} />
 
@@ -280,6 +305,16 @@ function FeatureItem({ icon, title, text, divider }: { icon: React.ReactNode; ti
         <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">{title}</p>
         <p className="text-xs text-[var(--foreground)]/60">{text}</p>
       </div>
+    </div>
+  );
+}
+
+function Value({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+  return (
+    <div className="rounded-2xl bg-[var(--muted)] p-5 text-center shadow-sm">
+      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--primary)]">{icon}</div>
+      <h3 className="font-serif text-base">{title}</h3>
+      <p className="mt-1.5 text-xs text-[var(--foreground)]/70">{text}</p>
     </div>
   );
 }
