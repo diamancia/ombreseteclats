@@ -75,8 +75,30 @@ export default function AdminSettingsPage() {
           <Field label="Tagline" value={settings.brandTagline || ""} onChange={(v) => setSettings({ ...settings, brandTagline: v })} />
         </Card>
 
+        <div className="rounded-2xl border-2 border-[var(--primary)] bg-[var(--primary)]/5 p-4">
+          <h2 className="font-serif text-lg">🎨 Apparence du site</h2>
+          <p className="text-xs text-gray-500">
+            Tout ce qui touche au header (barre du haut + bandeau défilant), à l&apos;accueil (Hero,
+            bannière) et au pied de page se règle ici — sans toucher au code. Les marges et
+            espacements sont fixes pour garder un rendu propre, seuls les textes/images/liens
+            changent.
+          </p>
+        </div>
+
         <Card title="Navigation (barre du haut)">
           <NavLinksEditor value={settings.navLinks || []} onChange={(v) => setSettings({ ...settings, navLinks: v })} />
+        </Card>
+
+        <Card title="Bandeau défilant (annonces & promotions)">
+          <p className="text-xs text-gray-400">
+            Défile en boucle tout en haut du site. Ajoute une info, une annonce ou une promotion ;
+            renseigne une date/heure de fin pour afficher un compte à rebours (« chrono promo »).
+            Laisse la liste vide pour revenir au texte par défaut.
+          </p>
+          <AnnouncementsEditor
+            value={settings.announcements || []}
+            onChange={(v) => setSettings({ ...settings, announcements: v })}
+          />
         </Card>
 
         <Card title="Page d'accueil (Hero)">
@@ -216,7 +238,7 @@ export default function AdminSettingsPage() {
           </p>
         </Card>
 
-        <Card title="Pied de page — Réseaux sociaux">
+        <Card title="Réseaux sociaux (pied de page & header)">
           <SocialLinksEditor value={settings.socialLinks || []} onChange={(v) => setSettings({ ...settings, socialLinks: v })} />
         </Card>
 
@@ -449,7 +471,7 @@ function NavLinksEditor({ value, onChange }: { value: NavLink[]; onChange: (v: N
   );
 }
 
-type SocialLink = { platform: string; url: string; active: boolean };
+type SocialLink = { platform: string; url: string; active: boolean; showInHeader?: boolean };
 
 function SocialLinksEditor({ value, onChange }: { value: SocialLink[]; onChange: (v: SocialLink[]) => void }) {
   function update(idx: number, patch: Partial<SocialLink>) {
@@ -463,7 +485,9 @@ function SocialLinksEditor({ value, onChange }: { value: SocialLink[]; onChange:
     <div className="space-y-2">
       <p className="text-xs text-gray-400">
         Coche un réseau, colle son URL directe — il apparaît aussitôt en pied de page avec sa
-        propre icône. Décoche pour le retirer sans perdre le lien enregistré.
+        propre icône. Décoche « Actif » pour le retirer sans perdre le lien enregistré. Coche en
+        plus « Header » pour l&apos;afficher aussi, en couleur, tout en haut du site à côté du
+        picto de localisation.
       </p>
       {value.map((s, i) => {
         const key = normalizePlatformKey(s.platform);
@@ -502,6 +526,14 @@ function SocialLinksEditor({ value, onChange }: { value: SocialLink[]; onChange:
               <input type="checkbox" checked={s.active !== false} onChange={(e) => update(i, { active: e.target.checked })} />
               Actif
             </label>
+            <label className="flex items-center gap-1 text-xs text-gray-500">
+              <input
+                type="checkbox"
+                checked={!!s.showInHeader}
+                onChange={(e) => update(i, { showInHeader: e.target.checked })}
+              />
+              Header
+            </label>
             <button type="button" onClick={() => remove(i)} className="text-red-600">
               <Trash2 className="h-4 w-4" />
             </button>
@@ -510,10 +542,69 @@ function SocialLinksEditor({ value, onChange }: { value: SocialLink[]; onChange:
       })}
       <button
         type="button"
-        onClick={() => onChange([...value, { platform: "instagram", url: "", active: true }])}
+        onClick={() => onChange([...value, { platform: "instagram", url: "", active: true, showInHeader: false }])}
         className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
       >
         <Plus className="h-3 w-3" /> Ajouter un réseau social
+      </button>
+    </div>
+  );
+}
+
+type Announcement = { text: string; link?: string; expiresAt?: string; active?: boolean };
+
+function AnnouncementsEditor({ value, onChange }: { value: Announcement[]; onChange: (v: Announcement[]) => void }) {
+  function update(idx: number, patch: Partial<Announcement>) {
+    onChange(value.map((a, i) => (i === idx ? { ...a, ...patch } : a)));
+  }
+  function remove(idx: number) {
+    onChange(value.filter((_, i) => i !== idx));
+  }
+
+  return (
+    <div className="space-y-2">
+      {value.map((a, i) => (
+        <div key={i} className="space-y-2 rounded-lg bg-gray-50 p-3">
+          <div className="flex items-center gap-2">
+            <input
+              placeholder="Texte de l'annonce (ex : -20% ce week-end sur la collection Femme)"
+              value={a.text}
+              onChange={(e) => update(i, { text: e.target.value })}
+              className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900"
+            />
+            <button type="button" onClick={() => remove(i)} className="text-red-600">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              placeholder="Lien au clic (optionnel, ex: /catalogue?genre=femme)"
+              value={a.link || ""}
+              onChange={(e) => update(i, { link: e.target.value })}
+              className="min-w-[220px] flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+            />
+            <label className="flex items-center gap-2 text-xs text-gray-500">
+              Fin (chrono)
+              <input
+                type="datetime-local"
+                value={a.expiresAt ? a.expiresAt.slice(0, 16) : ""}
+                onChange={(e) => update(i, { expiresAt: e.target.value ? new Date(e.target.value).toISOString() : undefined })}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+              />
+            </label>
+            <label className="flex items-center gap-1 text-xs text-gray-500">
+              <input type="checkbox" checked={a.active !== false} onChange={(e) => update(i, { active: e.target.checked })} />
+              Actif
+            </label>
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...value, { text: "", active: true }])}
+        className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
+      >
+        <Plus className="h-3 w-3" /> Ajouter une annonce / promotion
       </button>
     </div>
   );

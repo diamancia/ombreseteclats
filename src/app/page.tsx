@@ -37,7 +37,13 @@ export default async function HomePage() {
 
   return (
     <>
-      <Navbar brandName={brandName} navLinks={settings.navLinks} />
+      <Navbar
+        brandName={brandName}
+        navLinks={settings.navLinks}
+        announcements={settings.announcements}
+        socialLinks={settings.socialLinks}
+        address={settings.address}
+      />
       <Cart />
       <main className="min-h-screen">
         {/* Hero — fond noir fixe dans les deux thèmes (identité de marque), texte donc en

@@ -32,3 +32,25 @@ body {
   font-family: var(--font-playfair), Georgia, serif;
   letter-spacing: 0.02em;
 }
+
+/* Bandeau défilant (annonces/promotions du header) — deux copies du contenu, on
+   translate de -50% pour boucler sans à-coup. */
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-track {
+  animation: ticker-scroll 28s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}

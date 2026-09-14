@@ -1,17 +1,27 @@
 "use client";
 import Link from "next/link";
 import { useCart } from "@/context/CartProvider";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingBag, Menu, X, MapPin } from "lucide-react";
 import { useState } from "react";
 import { siteConfig } from "@/site.config";
 import ThemeToggle from "@/components/ThemeToggle";
+import TickerBanner, { Announcement } from "@/components/TickerBanner";
+import { SocialIcon, SOCIAL_BRAND_COLORS, normalizePlatformKey } from "@/components/SocialIcon";
+
+export type HeaderSocialLink = { platform: string; url: string; active?: boolean; showInHeader?: boolean };
 
 export default function Navbar({
   brandName = siteConfig.brand.name,
   navLinks = siteConfig.navbar.links,
+  announcements = [],
+  socialLinks = [],
+  address,
 }: {
   brandName?: string;
   navLinks?: { href: string; label: string }[];
+  announcements?: Announcement[];
+  socialLinks?: HeaderSocialLink[];
+  address?: string;
 }) {
   const { cartCount, setCartOpen } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -21,11 +31,14 @@ export default function Navbar({
     return true;
   });
 
+  const headerSocials = socialLinks.filter((s) => s.showInHeader && s.active !== false && s.url);
+
   return (
     <>
-      <div className="bg-[var(--primary)] py-2.5 text-center text-[10px] font-semibold tracking-[0.35em] text-black">
-        {siteConfig.brand.banner} <span className="ml-1">{siteConfig.brand.bannerSymbol}</span>
-      </div>
+      <TickerBanner
+        announcements={announcements}
+        fallbackText={`${siteConfig.brand.banner} ${siteConfig.brand.bannerSymbol}`}
+      />
       {/* Le fond reste noir dans les deux modes (identité de marque, "noir absolu") — le
           texte est donc fixé en clair ici, indépendamment de --foreground qui, lui,
           bascule avec le thème pour le reste du site. */}
@@ -47,6 +60,33 @@ export default function Navbar({
             ))}
           </nav>
           <div className="flex items-center gap-4">
+            {(headerSocials.length > 0 || address) && (
+              <div className="hidden items-center gap-3 border-r border-[var(--accent)]/40 pr-4 sm:flex">
+                {headerSocials.map((s) => (
+                  <a
+                    key={s.platform}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.platform}
+                    style={{ color: SOCIAL_BRAND_COLORS[normalizePlatformKey(s.platform)] }}
+                    className="opacity-90 transition-opacity hover:opacity-100"
+                  >
+                    <SocialIcon platform={s.platform} className="h-4 w-4" />
+                  </a>
+                ))}
+                {address && (
+                  <Link
+                    href="/#contact"
+                    aria-label="Notre adresse"
+                    title={address}
+                    className="text-[var(--primary)] opacity-90 transition-opacity hover:opacity-100"
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </Link>
+                )}
+              </div>
+            )}
             <ThemeToggle />
             <button
               onClick={() => setCartOpen(true)}

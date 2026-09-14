@@ -222,7 +222,30 @@ const SettingsSchema = new Schema(
       default: () => siteConfig.navbar.links,
     },
     socialLinks: {
-      type: [{ platform: String, url: String, active: { type: Boolean, default: true }, _id: false }],
+      type: [
+        {
+          platform: String,
+          url: String,
+          active: { type: Boolean, default: true },
+          // Affichage aussi dans la barre du haut (en plus du pied de page), coché au cas par cas.
+          showInHeader: { type: Boolean, default: false },
+          _id: false,
+        },
+      ],
+      default: [],
+    },
+    // Bandeau défilant du header — annonces, infos, promotions (avec compte à rebours optionnel
+    // via expiresAt pour les "chrono promotions"). Vide = repli sur le texte statique du thème.
+    announcements: {
+      type: [
+        {
+          text: String,
+          link: String,
+          expiresAt: Date,
+          active: { type: Boolean, default: true },
+          _id: false,
+        },
+      ],
       default: [],
     },
     // Bannière publicitaire page d'accueil — cahier des charges 4.10

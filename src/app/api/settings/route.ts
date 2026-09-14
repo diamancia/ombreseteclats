@@ -24,6 +24,7 @@ export async function GET() {
       socialAutoPublish: true,
       navLinks: siteConfig.navbar.links,
       socialLinks: [],
+      announcements: [],
       bannerEnabled: false,
       bannerType: "photo",
       bannerSize: "standard",

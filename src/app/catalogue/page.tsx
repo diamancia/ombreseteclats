@@ -81,7 +81,13 @@ export default async function CataloguePage({
 
   return (
     <>
-      <Navbar brandName={settings.brandName} navLinks={settings.navLinks} />
+      <Navbar
+        brandName={settings.brandName}
+        navLinks={settings.navLinks}
+        announcements={settings.announcements}
+        socialLinks={settings.socialLinks}
+        address={settings.address}
+      />
       <Cart />
       <main className="min-h-screen bg-[var(--background)] py-16">
         <div className="mx-auto max-w-7xl px-6">
