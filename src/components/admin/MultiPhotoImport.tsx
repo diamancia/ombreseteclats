@@ -4,6 +4,7 @@ import { useDropzone } from "react-dropzone";
 import { adminFetch, uploadImage, IMAGE_PRESETS } from "@/lib/adminClient";
 import { UploadCloud, X, Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import ProductAttributesFields, { ProductAttrs } from "./ProductAttributesFields";
+import { MetalType, GoldColor } from "@/lib/metals";
 
 type ImportItem = ProductAttrs & {
   id: string;
@@ -35,11 +36,15 @@ function stoneToText(stone?: ProductAttrs["stone"]): string | undefined {
 
 export default function MultiPhotoImport({
   categories,
+  metalTypes = [],
+  goldColors = [],
   aiEnabled = true,
   onClose,
   onImported,
 }: {
   categories: any[];
+  metalTypes?: MetalType[];
+  goldColors?: GoldColor[];
   aiEnabled?: boolean;
   onClose: () => void;
   onImported: () => void;
@@ -50,6 +55,8 @@ export default function MultiPhotoImport({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [batchGender, setBatchGender] = useState<ImportItem["gender"]>("femme");
   const [batchCategory, setBatchCategory] = useState("");
+  const [batchMetal, setBatchMetal] = useState("");
+  const [batchGoldColor, setBatchGoldColor] = useState("");
   const itemsRef = useRef<ImportItem[]>([]);
   itemsRef.current = items;
 
@@ -57,7 +64,15 @@ export default function MultiPhotoImport({
   const subCatsOf = (parentId: string) => categories.filter((c) => c.parent === parentId);
 
   function applyBatchToAll() {
-    setItems((prev) => prev.map((it) => ({ ...it, gender: batchGender, category: batchCategory || it.category })));
+    setItems((prev) =>
+      prev.map((it) => ({
+        ...it,
+        gender: batchGender,
+        category: batchCategory || it.category,
+        metal: batchMetal || it.metal,
+        goldColor: batchMetal === "or" ? batchGoldColor || it.goldColor : undefined,
+      }))
+    );
   }
 
   useEffect(() => {
@@ -109,6 +124,8 @@ export default function MultiPhotoImport({
       basePrice: 0,
       category: batchCategory,
       gender: batchGender,
+      metal: batchMetal || undefined,
+      goldColor: batchMetal === "or" ? batchGoldColor || undefined : undefined,
       shortDesc: "",
       longDesc: "",
       hashtags: [],
@@ -157,6 +174,8 @@ export default function MultiPhotoImport({
           jewelryType: it.jewelryType || undefined,
           dimensionValue: it.dimensionValue || undefined,
           stone: it.stone || undefined,
+          metal: it.metal || undefined,
+          goldColor: it.metal === "or" ? it.goldColor || undefined : undefined,
           aiGenerated: { description: !!it.shortDesc, hashtags: it.hashtags },
         })),
       };
@@ -206,6 +225,41 @@ export default function MultiPhotoImport({
               subCatsOf={subCatsOf}
             />
           </div>
+          {metalTypes.length > 0 && (
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                Métal (par défaut pour ce lot)
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  value={batchMetal}
+                  onChange={(e) => setBatchMetal(e.target.value)}
+                  className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900"
+                >
+                  <option value="">—</option>
+                  {metalTypes.map((m) => (
+                    <option key={m.key} value={m.key}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                {batchMetal === "or" &&
+                  goldColors.map((c) => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      title={c.label}
+                      aria-label={c.label}
+                      onClick={() => setBatchGoldColor(c.key)}
+                      className={`h-6 w-6 rounded-full ring-2 ${
+                        batchGoldColor === c.key ? "ring-[var(--primary)]" : "ring-transparent hover:ring-gray-300"
+                      }`}
+                      style={{ backgroundColor: c.hex }}
+                    />
+                  ))}
+              </div>
+            </div>
+          )}
           {items.length > 0 && (
             <button
               type="button"
@@ -336,8 +390,10 @@ export default function MultiPhotoImport({
                   {expanded && (
                     <div className="mt-3">
                       <ProductAttributesFields
-                        value={{ jewelryType: it.jewelryType, dimensionValue: it.dimensionValue, stone: it.stone }}
+                        value={{ jewelryType: it.jewelryType, dimensionValue: it.dimensionValue, stone: it.stone, metal: it.metal, goldColor: it.goldColor }}
                         onChange={(patch) => updateItem(it.id, patch)}
+                        metalTypes={metalTypes}
+                        goldColors={goldColors}
                       />
                     </div>
                   )}
