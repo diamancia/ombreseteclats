@@ -5,6 +5,7 @@ import { Plus, Edit, Trash2, Upload, X, Share2, Loader2 } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import ProductAttributesFields from "@/components/admin/ProductAttributesFields";
 import MultiPhotoImport from "@/components/admin/MultiPhotoImport";
+import { DEFAULT_METAL_TYPES, DEFAULT_GOLD_COLORS } from "@/lib/metals";
 
 const V1 = siteConfig.product.variant1;
 const V2 = siteConfig.product.variant2;
@@ -210,10 +211,21 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {editing && <ProductModal initial={editing} categories={categories} onClose={() => setEditing(null)} onSaved={load} />}
+      {editing && (
+        <ProductModal
+          initial={editing}
+          categories={categories}
+          metalTypes={settings?.metalTypes || DEFAULT_METAL_TYPES}
+          goldColors={settings?.goldColors || DEFAULT_GOLD_COLORS}
+          onClose={() => setEditing(null)}
+          onSaved={load}
+        />
+      )}
       {importing && (
         <MultiPhotoImport
           categories={categories}
+          metalTypes={settings?.metalTypes || DEFAULT_METAL_TYPES}
+          goldColors={settings?.goldColors || DEFAULT_GOLD_COLORS}
           aiEnabled={settings?.moduleFlags?.ai_description !== false}
           onClose={() => setImporting(false)}
           onImported={load}
@@ -223,7 +235,21 @@ export default function AdminProductsPage() {
   );
 }
 
-function ProductModal({ initial, categories, onClose, onSaved }: { initial: any; categories: any[]; onClose: () => void; onSaved: () => void }) {
+function ProductModal({
+  initial,
+  categories,
+  metalTypes,
+  goldColors,
+  onClose,
+  onSaved,
+}: {
+  initial: any;
+  categories: any[];
+  metalTypes: { key: string; label: string }[];
+  goldColors: { key: string; label: string; hex: string }[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
   const [form, setForm] = useState({ ...initial, flavors: initial.flavors || [], sizes: initial.sizes || [], images: initial.images || [] });
   const [saving, setSaving] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
@@ -533,8 +559,10 @@ function ProductModal({ initial, categories, onClose, onSaved }: { initial: any;
           <div className="rounded-xl border border-gray-200 p-4">
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider">Attributs de la pièce</h3>
             <ProductAttributesFields
-              value={{ jewelryType: form.jewelryType, dimensionValue: form.dimensionValue, stone: form.stone }}
+              value={{ jewelryType: form.jewelryType, dimensionValue: form.dimensionValue, stone: form.stone, metal: form.metal, goldColor: form.goldColor }}
               onChange={(patch) => setForm({ ...form, ...patch })}
+              metalTypes={metalTypes}
+              goldColors={goldColors}
             />
           </div>
         </div>

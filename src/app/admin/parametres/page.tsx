@@ -4,6 +4,7 @@ import { adminFetch, uploadImage, IMAGE_PRESETS } from "@/lib/adminClient";
 import { Upload, Save, Plus, Trash2 } from "lucide-react";
 import { MODULES } from "@/lib/modules";
 import { SOCIAL_PLATFORMS, SocialIcon, normalizePlatformKey } from "@/components/SocialIcon";
+import { DEFAULT_METAL_TYPES, DEFAULT_GOLD_COLORS, MetalType, GoldColor } from "@/lib/metals";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -242,6 +243,24 @@ export default function AdminSettingsPage() {
               onChange={(e) => setSettings({ ...settings, about: e.target.value })}
               placeholder="Décrivez votre histoire, vos valeurs…"
               className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
+            />
+          </div>
+        </Card>
+
+        <Card title="Métaux & couleurs">
+          <p className="text-xs text-gray-400">
+            Métaux vendus (utilisés comme filtre boutique et dans l&apos;import produit) et
+            couleurs d&apos;or disponibles — modifiables librement, sans toucher au code.
+          </p>
+          <MetalTypesEditor
+            value={settings.metalTypes || DEFAULT_METAL_TYPES}
+            onChange={(v) => setSettings({ ...settings, metalTypes: v })}
+          />
+          <div className="pt-2">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Couleurs d&apos;or</label>
+            <GoldColorsEditor
+              value={settings.goldColors || DEFAULT_GOLD_COLORS}
+              onChange={(v) => setSettings({ ...settings, goldColors: v })}
             />
           </div>
         </Card>
@@ -522,6 +541,91 @@ function ModulesPanel({ value, onChange }: { value: Record<string, boolean>; onC
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function MetalTypesEditor({ value, onChange }: { value: MetalType[]; onChange: (v: MetalType[]) => void }) {
+  function update(idx: number, patch: Partial<MetalType>) {
+    onChange(value.map((m, i) => (i === idx ? { ...m, ...patch } : m)));
+  }
+  function remove(idx: number) {
+    onChange(value.filter((_, i) => i !== idx));
+  }
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-semibold uppercase tracking-wider">Métaux (filtre boutique)</label>
+      {value.map((m, i) => (
+        <div key={i} className="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
+          <input
+            placeholder="clé (ex: or)"
+            value={m.key}
+            onChange={(e) => update(i, { key: e.target.value })}
+            className="w-28 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+          />
+          <input
+            placeholder="Libellé (ex: Or)"
+            value={m.label}
+            onChange={(e) => update(i, { label: e.target.value })}
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+          />
+          <button type="button" onClick={() => remove(i)} className="text-red-600">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...value, { key: "", label: "" }])}
+        className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
+      >
+        <Plus className="h-3 w-3" /> Ajouter un métal
+      </button>
+    </div>
+  );
+}
+
+function GoldColorsEditor({ value, onChange }: { value: GoldColor[]; onChange: (v: GoldColor[]) => void }) {
+  function update(idx: number, patch: Partial<GoldColor>) {
+    onChange(value.map((c, i) => (i === idx ? { ...c, ...patch } : c)));
+  }
+  function remove(idx: number) {
+    onChange(value.filter((_, i) => i !== idx));
+  }
+  return (
+    <div className="space-y-2">
+      {value.map((c, i) => (
+        <div key={i} className="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
+          <input
+            type="color"
+            value={c.hex || "#cccccc"}
+            onChange={(e) => update(i, { hex: e.target.value })}
+            className="h-8 w-8 flex-shrink-0 cursor-pointer rounded-full border-0 bg-transparent p-0"
+          />
+          <input
+            placeholder="clé (ex: rose)"
+            value={c.key}
+            onChange={(e) => update(i, { key: e.target.value })}
+            className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+          />
+          <input
+            placeholder="Libellé (ex: Or rose)"
+            value={c.label}
+            onChange={(e) => update(i, { label: e.target.value })}
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+          />
+          <button type="button" onClick={() => remove(i)} className="text-red-600">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...value, { key: "", label: "", hex: "#cccccc" }])}
+        className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
+      >
+        <Plus className="h-3 w-3" /> Ajouter une couleur
+      </button>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 "use client";
+import { MetalType, GoldColor } from "@/lib/metals";
 
 export type StoneAttrs = {
   nature?: "naturelle" | "synthetique" | "diamant" | "";
@@ -12,6 +13,8 @@ export type ProductAttrs = {
   jewelryType?: string;
   dimensionValue?: string;
   stone?: StoneAttrs | null;
+  metal?: string;
+  goldColor?: string;
 };
 
 const JEWELRY_TYPES: { value: string; label: string }[] = [
@@ -23,6 +26,7 @@ const JEWELRY_TYPES: { value: string; label: string }[] = [
   { value: "ceinture_traditionnelle", label: "Ceinture traditionnelle" },
   { value: "broche", label: "Broche" },
   { value: "perles", label: "Perles" },
+  { value: "cordon", label: "Cordon" },
 ];
 
 const DIMENSION_LABEL: Record<string, string> = {
@@ -32,6 +36,7 @@ const DIMENSION_LABEL: Record<string, string> = {
   gourmette_cheville: "Tour de cheville (cm)",
   ceinture_traditionnelle: "Tour de taille (cm)",
   perles: "Longueur du rang (cm)",
+  cordon: "Longueur (cm)",
 };
 
 const STONE_NATURES: { value: StoneAttrs["nature"]; label: string }[] = [
@@ -78,9 +83,13 @@ function Chip({
 export default function ProductAttributesFields({
   value,
   onChange,
+  metalTypes = [],
+  goldColors = [],
 }: {
   value: ProductAttrs;
   onChange: (patch: Partial<ProductAttrs>) => void;
+  metalTypes?: MetalType[];
+  goldColors?: GoldColor[];
 }) {
   const stone = value.stone || null;
   const dimensionLabel = value.jewelryType ? DIMENSION_LABEL[value.jewelryType] : undefined;
@@ -107,6 +116,40 @@ export default function ProductAttributesFields({
           ))}
         </div>
       </div>
+
+      {metalTypes.length > 0 && (
+        <div>
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Métal</label>
+          <div className="flex flex-wrap gap-2">
+            {metalTypes.map((m) => (
+              <Chip
+                key={m.key}
+                active={value.metal === m.key}
+                onClick={() => onChange({ metal: m.key, goldColor: m.key === "or" ? value.goldColor : undefined })}
+              >
+                {m.label}
+              </Chip>
+            ))}
+          </div>
+          {value.metal === "or" && goldColors.length > 0 && (
+            <div className="mt-3 flex items-center gap-2">
+              {goldColors.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  title={c.label}
+                  aria-label={c.label}
+                  onClick={() => onChange({ goldColor: c.key })}
+                  className={`h-7 w-7 rounded-full ring-2 transition-transform ${
+                    value.goldColor === c.key ? "scale-110 ring-[var(--primary)]" : "ring-transparent hover:ring-gray-300"
+                  }`}
+                  style={{ backgroundColor: c.hex }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {dimensionLabel && (
         <div>
