@@ -4,6 +4,7 @@ import { useCart } from "@/context/CartProvider";
 import { ShoppingBag, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { siteConfig } from "@/site.config";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Navbar({
   brandName = siteConfig.brand.name,
@@ -25,7 +26,10 @@ export default function Navbar({
       <div className="bg-[var(--primary)] py-2.5 text-center text-[10px] font-semibold tracking-[0.35em] text-black">
         {siteConfig.brand.banner} <span className="ml-1">{siteConfig.brand.bannerSymbol}</span>
       </div>
-      <header className="sticky top-0 z-40 border-b border-[var(--accent)] bg-black/95 backdrop-blur">
+      {/* Le fond reste noir dans les deux modes (identité de marque, "noir absolu") — le
+          texte est donc fixé en clair ici, indépendamment de --foreground qui, lui,
+          bascule avec le thème pour le reste du site. */}
+      <header className="sticky top-0 z-40 border-b border-[var(--accent)] bg-black/95 text-[#f5f1e8] backdrop-blur">
         <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6 md:h-28">
           <Link href="/" className="flex items-center" aria-label={brandName}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -43,6 +47,7 @@ export default function Navbar({
             ))}
           </nav>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <button
               onClick={() => setCartOpen(true)}
               aria-label="Panier"

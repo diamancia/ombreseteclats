@@ -38,6 +38,16 @@ export interface SiteConfig {
     // Accent réservé à la collection Femme — cahier des charges 4.6 (section 5 : pas de thème
     // clair global, l'or rosé n'est utilisé que localement sur les blocs/badges Femme).
     roseGold: string;
+    // Variante claire du même thème (bouton clair/sombre) — même famille de couleurs
+    // (ivoire chaud / champagne), inversée plutôt qu'une palette différente.
+    light: {
+      background: string;
+      foreground: string;
+      primary: string;
+      primaryDark: string;
+      accent: string;
+      muted: string;
+    };
   };
   meta: { title: string; description: string };
   hero: { defaultTitle: string; defaultSubtitle: string; defaultImageUrl: string };
@@ -91,6 +101,14 @@ export const siteConfig: SiteConfig = {
     accent: "#2a2a2a",          // gris très foncé (bordures, cartes)
     muted: "#141414",           // noir charbon (sections, cards)
     roseGold: "#C9A08A",        // or rosé discret — réservé à la collection Femme
+    light: {
+      background: "#f7f3ea",    // ivoire chaud (même teinte que le "foreground" sombre, inversé)
+      foreground: "#1c1712",    // noir chaud, lisible sur fond clair
+      primary: "#8a7550",       // champagne assombri pour rester lisible sur fond clair
+      primaryDark: "#6e5c3e",
+      accent: "#e9e1cd",
+      muted: "#f0e9d9",
+    },
   },
 
   meta: {
