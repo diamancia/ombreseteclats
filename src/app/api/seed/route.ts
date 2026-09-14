@@ -68,29 +68,6 @@ export async function POST(req: NextRequest) {
 
   const catMap = Object.fromEntries(cats.map((c: any) => [c.name, c._id]));
 
-  const finitions = {
-    poli: {
-      name: "Poli brillant",
-      surcharge: 0,
-      imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&auto=format&fit=crop&q=80",
-    },
-    brosse: {
-      name: "Brossé mat",
-      surcharge: 0,
-      imageUrl: "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=400&auto=format&fit=crop&q=80",
-    },
-    noirci: {
-      name: "Argent noirci",
-      surcharge: 15,
-      imageUrl: "https://images.unsplash.com/photo-1608042314453-ae338d80c427?w=400&auto=format&fit=crop&q=80",
-    },
-    orose: {
-      name: "Plaqué or rose",
-      surcharge: 40,
-      imageUrl: "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=400&auto=format&fit=crop&q=80",
-    },
-  };
-
   const tailles_bague = [
     { name: "Taille 52", surcharge: 0 },
     { name: "Taille 54", surcharge: 0 },
@@ -128,7 +105,8 @@ export async function POST(req: NextRequest) {
         "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1596944946297-0e24a7a79386?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -148,7 +126,8 @@ export async function POST(req: NextRequest) {
         "https://images.unsplash.com/photo-1598560917807-1bae44bd2be8?w=1200&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1603974372039-adc49044b6bd?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -167,7 +146,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -186,7 +166,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1596944946297-0e24a7a79386?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.noirci, finitions.orose],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -206,7 +187,8 @@ export async function POST(req: NextRequest) {
         "https://images.unsplash.com/photo-1535556116002-6281ff3e9f36?w=1200&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.brosse, finitions.poli],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -225,7 +207,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1611107683227-e9060eccd846?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
 
@@ -247,7 +230,8 @@ export async function POST(req: NextRequest) {
         "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=1200&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -266,7 +250,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1608042314453-ae338d80c427?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -285,7 +270,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.brosse, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -304,7 +290,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -323,7 +310,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1603566541830-a1ea21baeca7?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
 
@@ -345,7 +333,8 @@ export async function POST(req: NextRequest) {
         "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=1200&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_gourmette,
     },
     {
@@ -364,7 +353,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_gourmette,
     },
     {
@@ -383,7 +373,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_gourmette,
     },
     {
@@ -402,7 +393,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_gourmette,
     },
     {
@@ -421,7 +413,8 @@ export async function POST(req: NextRequest) {
       images: [
         "https://images.unsplash.com/photo-1613843574279-19baf4fe0b71?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_gourmette,
     },
   ]);
