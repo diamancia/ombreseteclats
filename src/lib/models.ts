@@ -271,3 +271,33 @@ const SettingsSchema = new Schema(
 export type SettingsDoc = InferSchemaType<typeof SettingsSchema>;
 export const Settings: Model<SettingsDoc> =
   mongoose.models.Settings || mongoose.model("Settings", SettingsSchema);
+
+// Landing page produit — pages promo mono-produit (ex: collier diamant), programmables
+// (date de lancement, durée/échéance du compte à rebours) sans redéploiement.
+const LandingPageSchema = new Schema(
+  {
+    slug: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    productName: { type: String, required: true },
+    kicker: { type: String, default: "" },
+    tagline: { type: String, default: "" },
+    images: { type: [String], default: [] },
+    priceOriginal: { type: Number, required: true },
+    priceCurrent: { type: Number, required: true },
+    specs: {
+      type: [{ label: String, value: String, _id: false }],
+      default: [],
+    },
+    ctaLabel: { type: String, default: "Acheter maintenant" },
+    ctaLink: { type: String, default: "/sur-mesure" },
+    // Programmation — cahier des charges "je veux programmer quand lancer la landing page,
+    // sa durée et le compte à rebours dû à...". startAt = mise en ligne, endAt = échéance du
+    // compte à rebours (aussi la fin de l'offre) ; active permet de dépublier sans tout effacer.
+    startAt: Date,
+    endAt: Date,
+    active: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+export type LandingPageDoc = InferSchemaType<typeof LandingPageSchema>;
+export const LandingPage: Model<LandingPageDoc> =
+  mongoose.models.LandingPage || mongoose.model("LandingPage", LandingPageSchema);
