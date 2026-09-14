@@ -138,7 +138,6 @@ export const siteConfig: SiteConfig = {
       { href: "/catalogue?genre=homme", label: "Collections Homme" },
       { href: "/catalogue?genre=femme", label: "Collections Femme" },
       { href: "/sur-mesure", label: "Sur-mesure" },
-      { href: "/#a-propos", label: "À propos" },
       { href: "/#contact", label: "Contact" },
     ],
   },

@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
 import AddToCartButton from "@/components/AddToCartButton";
 import ContactButton from "@/components/ContactButton";
+import FilterPanel from "@/components/FilterPanel";
 import { connectDb } from "@/lib/mongoose";
 import { Product, Category, Settings } from "@/lib/models";
 import { DEFAULT_METAL_TYPES } from "@/lib/metals";
@@ -68,6 +69,33 @@ export default async function CataloguePage({
       : [selectedCat._id, ...categories.filter((c: any) => c.parent === selectedCat._id).map((c: any) => c._id)]
     : null;
 
+  const chips: { label: string; removeHref: string }[] = [];
+  if (sp.genre) {
+    chips.push({
+      label: sp.genre === "femme" ? "Collections Femme" : "Collections Homme",
+      removeHref: catalogueHref({ cat: sp.cat, metal: sp.metal, prix: sp.prix }),
+    });
+  }
+  if (selectedCat) {
+    chips.push({
+      label: (selectedCat as any).name,
+      removeHref: catalogueHref({ genre: sp.genre, metal: sp.metal, prix: sp.prix }),
+    });
+  }
+  if (sp.metal) {
+    const m = metalTypes.find((mt: any) => mt.key === sp.metal);
+    chips.push({
+      label: m?.label || sp.metal,
+      removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre, prix: sp.prix }),
+    });
+  }
+  if (priceBracket) {
+    chips.push({
+      label: priceBracket.label,
+      removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal }),
+    });
+  }
+
   const filtered = products
     .filter((p: any) => !matchingCatIds || matchingCatIds.includes(p.category?._id))
     .filter((p: any) => !sp.genre || (p.gender || "homme") === sp.genre)
@@ -96,129 +124,142 @@ export default async function CataloguePage({
             <div className="mt-3 h-px w-16 bg-[var(--primary)]" />
           </div>
 
-          <div className="mb-6 flex flex-wrap justify-center gap-3">
-            {[
-              { key: undefined, label: "Tout" },
-              { key: "homme", label: "Collections Homme" },
-              { key: "femme", label: "Collections Femme" },
-            ].map((g) => {
-              const active = (sp.genre || undefined) === g.key;
-              const isFemme = g.key === "femme";
-              return (
+          <FilterPanel activeChips={chips} clearHref="/catalogue">
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/40">Genre</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: undefined, label: "Tout" },
+                  { key: "homme", label: "Collections Homme" },
+                  { key: "femme", label: "Collections Femme" },
+                ].map((g) => {
+                  const active = (sp.genre || undefined) === g.key;
+                  const isFemme = g.key === "femme";
+                  return (
+                    <Link
+                      key={g.label}
+                      href={catalogueHref({ cat: sp.cat, genre: g.key, metal: sp.metal, prix: sp.prix })}
+                      className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
+                        active
+                          ? isFemme
+                            ? "bg-[var(--rose-gold)] text-white"
+                            : "bg-[var(--primary)] text-[var(--background)]"
+                          : isFemme
+                          ? "border border-[var(--rose-gold)] text-[var(--rose-gold)] hover:bg-[var(--rose-gold)] hover:text-white"
+                          : "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
+                      }`}
+                    >
+                      {g.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/40">Catégorie</p>
+              <div className="flex flex-wrap gap-2">
                 <Link
-                  key={g.label}
-                  href={catalogueHref({ cat: sp.cat, genre: g.key, metal: sp.metal, prix: sp.prix })}
+                  href={catalogueHref({ genre: sp.genre, metal: sp.metal, prix: sp.prix })}
                   className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
-                    active
-                      ? isFemme
-                        ? "bg-[var(--rose-gold)] text-white"
-                        : "bg-[var(--primary)] text-[var(--background)]"
-                      : isFemme
-                      ? "border border-[var(--rose-gold)] text-[var(--rose-gold)] hover:bg-[var(--rose-gold)] hover:text-white"
+                    !sp.cat
+                      ? "bg-[var(--primary)] text-[var(--background)]"
                       : "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
                   }`}
                 >
-                  {g.label}
+                  Toutes les catégories
                 </Link>
-              );
-            })}
-          </div>
+                {topLevelCats.map((c: any) => (
+                  <Link
+                    key={c._id}
+                    href={catalogueHref({ cat: c._id, genre: sp.genre, metal: sp.metal, prix: sp.prix })}
+                    className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
+                      sp.cat === c._id || c._id === activeParentId
+                        ? "bg-[var(--primary)] text-[var(--background)]"
+                        : "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
+                    }`}
+                  >
+                    {c.name}
+                  </Link>
+                ))}
+              </div>
+              {subCats.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {subCats.map((c: any) => (
+                    <Link
+                      key={c._id}
+                      href={catalogueHref({ cat: c._id, genre: sp.genre, metal: sp.metal, prix: sp.prix })}
+                      className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
+                        sp.cat === c._id
+                          ? "bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]"
+                          : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
+                      }`}
+                    >
+                      {c.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          <div className="mb-4 flex flex-wrap justify-center gap-3">
-            <Link
-              href={catalogueHref({ genre: sp.genre, metal: sp.metal, prix: sp.prix })}
-              className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
-                !sp.cat
-                  ? "bg-[var(--primary)] text-[var(--background)]"
-                  : "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
-              }`}
-            >
-              Toutes les catégories
-            </Link>
-            {topLevelCats.map((c: any) => (
-              <Link
-                key={c._id}
-                href={catalogueHref({ cat: c._id, genre: sp.genre, metal: sp.metal, prix: sp.prix })}
-                className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
-                  sp.cat === c._id || c._id === activeParentId
-                    ? "bg-[var(--primary)] text-[var(--background)]"
-                    : "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
-                }`}
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
-
-          {subCats.length > 0 && (
-            <div className="mb-10 flex flex-wrap justify-center gap-2">
-              {subCats.map((c: any) => (
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/40">Métal</p>
+              <div className="flex flex-wrap gap-2">
                 <Link
-                  key={c._id}
-                  href={catalogueHref({ cat: c._id, genre: sp.genre, metal: sp.metal, prix: sp.prix })}
+                  href={catalogueHref({ cat: sp.cat, genre: sp.genre, prix: sp.prix })}
                   className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
-                    sp.cat === c._id
-                      ? "bg-[var(--accent)] text-[var(--primary)] ring-1 ring-[var(--primary)]"
+                    !sp.metal
+                      ? "bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]"
                       : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
                   }`}
                 >
-                  {c.name}
+                  Tous les métaux
                 </Link>
-              ))}
+                {metalTypes.map((m: any) => (
+                  <Link
+                    key={m.key}
+                    href={catalogueHref({ cat: sp.cat, genre: sp.genre, metal: m.key, prix: sp.prix })}
+                    className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
+                      sp.metal === m.key
+                        ? "bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]"
+                        : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
+                    }`}
+                  >
+                    {m.label}
+                  </Link>
+                ))}
+              </div>
             </div>
-          )}
 
-          <div className="mb-4 flex flex-wrap justify-center gap-2">
-            <Link
-              href={catalogueHref({ cat: sp.cat, genre: sp.genre, prix: sp.prix })}
-              className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
-                !sp.metal
-                  ? "bg-[var(--accent)] text-[var(--primary)] ring-1 ring-[var(--primary)]"
-                  : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
-              }`}
-            >
-              Tous les métaux
-            </Link>
-            {metalTypes.map((m: any) => (
-              <Link
-                key={m.key}
-                href={catalogueHref({ cat: sp.cat, genre: sp.genre, metal: m.key, prix: sp.prix })}
-                className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
-                  sp.metal === m.key
-                    ? "bg-[var(--accent)] text-[var(--primary)] ring-1 ring-[var(--primary)]"
-                    : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
-                }`}
-              >
-                {m.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="mb-10 flex flex-wrap justify-center gap-2">
-            <Link
-              href={catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal })}
-              className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
-                !sp.prix
-                  ? "bg-[var(--accent)] text-[var(--primary)] ring-1 ring-[var(--primary)]"
-                  : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
-              }`}
-            >
-              Tous les prix
-            </Link>
-            {PRICE_BRACKETS.map((b) => (
-              <Link
-                key={b.key}
-                href={catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal, prix: b.key })}
-                className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
-                  sp.prix === b.key
-                    ? "bg-[var(--accent)] text-[var(--primary)] ring-1 ring-[var(--primary)]"
-                    : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
-                }`}
-              >
-                {b.label}
-              </Link>
-            ))}
-          </div>
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/40">Budget</p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal })}
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
+                    !sp.prix
+                      ? "bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]"
+                      : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
+                  }`}
+                >
+                  Tous les prix
+                </Link>
+                {PRICE_BRACKETS.map((b) => (
+                  <Link
+                    key={b.key}
+                    href={catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal, prix: b.key })}
+                    className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
+                      sp.prix === b.key
+                        ? "bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]"
+                        : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
+                    }`}
+                  >
+                    {b.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </FilterPanel>
 
           {filtered.length === 0 ? (
             <p className="py-20 text-center text-[var(--foreground)]/60">Aucun produit dans cette catégorie</p>
