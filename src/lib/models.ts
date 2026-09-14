@@ -68,6 +68,18 @@ const ProductSchema = new Schema(
       description: { type: Boolean, default: false },
       hashtags: { type: [String], default: [] },
     },
+    // Publication réseaux sociaux — cahier des charges 4.5
+    socialPostStatus: {
+      type: String,
+      enum: ["none", "pending", "published", "failed"],
+      default: "none",
+    },
+    socialPostedAt: Date,
+    socialPostIds: {
+      facebook: String,
+      instagram: String,
+    },
+    socialPostError: String,
   },
   { timestamps: true, suppressReservedKeysWarning: true }
 );
@@ -139,6 +151,8 @@ const SettingsSchema = new Schema(
     cgv: String,
     rgpd: String,
     cookiesPolicy: String,
+    // Réseaux sociaux — cahier des charges 4.5
+    socialAutoPublish: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
