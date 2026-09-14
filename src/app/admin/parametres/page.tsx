@@ -193,7 +193,7 @@ export default function AdminSettingsPage() {
           <Field label="Téléphone" value={settings.phone || ""} onChange={(v) => setSettings({ ...settings, phone: v })} />
           <Field label="Zone de livraison" value={settings.zone || ""} onChange={(v) => setSettings({ ...settings, zone: v })} />
           <Field
-            label="Adresse (affiche une carte Google Maps sur la page Contact)"
+            label="Adresse (affichée en pied de page + carte Google Maps, sur tout le site)"
             value={settings.address || ""}
             onChange={(v) => setSettings({ ...settings, address: v })}
           />

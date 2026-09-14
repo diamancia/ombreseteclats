@@ -201,9 +201,10 @@ const SettingsSchema = new Schema(
     email: String,
     phone: String,
     zone: String,
-    // Carte Google Maps page Contact — cahier des charges 4.7. Optionnel : sans adresse
-    // renseignée, la carte ne s'affiche pas (site sans boutique physique par défaut).
-    address: { type: String, default: "" },
+    // Affichée en pied de page + carte Google Maps — cahier des charges 4.7. Valeur fictive
+    // de départ (quartier des joailliers à Paris), à remplacer par la vraie adresse en
+    // Paramètres > Contact ; laisser vide retire l'adresse du pied de page et la carte.
+    address: { type: String, default: "14 rue des Orfèvres, 75001 Paris" },
     adminPassword: { type: String, required: true },
     slots: { type: [String], default: () => siteConfig.defaults.slots },
     openWeekdays: { type: [Number], default: () => siteConfig.defaults.openWeekdays },

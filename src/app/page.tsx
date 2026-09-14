@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Truck, Award, Gem, MessageCircle, Hammer } from "lucide-react";
+import { Truck, Award, Gem, Hammer } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
 import AddToCartButton from "@/components/AddToCartButton";
 import ProductCard from "@/components/ProductCard";
+import ContactButton from "@/components/ContactButton";
 import { connectDb } from "@/lib/mongoose";
 import { Product, Category, Settings } from "@/lib/models";
 import { siteConfig } from "@/site.config";
@@ -209,19 +210,9 @@ export default async function HomePage() {
           </div>
         </section>
       </main>
-      <Footer brandName={brandName} socialLinks={settings.socialLinks} />
+      <Footer brandName={brandName} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
 
-      {siteConfig.features.whatsappButton && (
-        <a
-          href={settings.phone ? `https://wa.me/${settings.phone.replace(/\D/g, "")}` : "#"}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Contact WhatsApp"
-          className="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-[var(--background)] shadow-lg transition-transform hover:scale-110"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </a>
-      )}
+      {siteConfig.features.whatsappButton && <ContactButton phone={settings.phone} />}
     </>
   );
 }

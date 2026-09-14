@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
+import ContactButton from "@/components/ContactButton";
 import { connectDb } from "@/lib/mongoose";
 import { Settings } from "@/lib/models";
 import { siteConfig } from "@/site.config";
@@ -39,7 +40,8 @@ export default async function RgpdPage() {
           )}
         </div>
       </main>
-      <Footer brandName={brand} socialLinks={settings.socialLinks} />
+      <Footer brandName={brand} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
+      {siteConfig.features.whatsappButton && <ContactButton phone={settings.phone} />}
     </>
   );
 }

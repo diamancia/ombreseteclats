@@ -20,7 +20,7 @@ export async function GET() {
       slots: siteConfig.defaults.slots,
       openWeekdays: siteConfig.defaults.openWeekdays,
       minDelay: siteConfig.defaults.minDelay,
-      address: "",
+      address: "14 rue des Orfèvres, 75001 Paris",
       socialAutoPublish: true,
       navLinks: siteConfig.navbar.links,
       socialLinks: [],

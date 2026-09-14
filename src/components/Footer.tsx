@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CreditCard, Award, Headphones, Truck } from "lucide-react";
+import { CreditCard, Award, Truck, Mail, Phone, MapPin } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import { SocialIcon } from "@/components/SocialIcon";
 
@@ -8,9 +8,15 @@ export type FooterSocialLink = { platform: string; url: string; active?: boolean
 export default function Footer({
   brandName = siteConfig.brand.name,
   socialLinks = [],
+  email,
+  phone,
+  address,
 }: {
   brandName?: string;
   socialLinks?: FooterSocialLink[];
+  email?: string;
+  phone?: string;
+  address?: string;
 }) {
   const activeSocials = socialLinks.filter((s) => s.active !== false && s.url);
   return (
@@ -38,6 +44,47 @@ export default function Footer({
           </div>
         </div>
       </div>
+
+      {/* Coordonnées — fusionnées depuis l'ancienne page /contact, visibles sur tout le
+          site plutôt que sur une seule page (cf. consolidation de /a-propos). */}
+      {(email || phone || address) && (
+        <div id="contact" className="scroll-mt-24 border-t border-[var(--accent)] py-10">
+          <div className="mx-auto grid max-w-4xl gap-6 px-6 text-center sm:grid-cols-3">
+            {email && (
+              <a href={`mailto:${email}`} className="flex flex-col items-center gap-2 hover:text-[var(--primary)]">
+                <Mail className="h-5 w-5 text-[var(--primary)]" />
+                <span className="text-xs">{email}</span>
+              </a>
+            )}
+            {phone && (
+              <a href={`tel:${phone.replace(/\s/g, "")}`} className="flex flex-col items-center gap-2 hover:text-[var(--primary)]">
+                <Phone className="h-5 w-5 text-[var(--primary)]" />
+                <span className="text-xs">{phone}</span>
+              </a>
+            )}
+            {address && (
+              <div className="flex flex-col items-center gap-2">
+                <MapPin className="h-5 w-5 text-[var(--primary)]" />
+                <span className="text-xs">{address}</span>
+              </div>
+            )}
+          </div>
+          {address && process.env.GOOGLE_MAPS_API_KEY && (
+            <div className="mx-auto mt-8 max-w-2xl overflow-hidden rounded-2xl px-6">
+              <iframe
+                title="Localisation"
+                width="100%"
+                height="220"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(address)}`}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {activeSocials.length > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[var(--accent)] py-5">
           {activeSocials.map((s) => (
@@ -58,7 +105,7 @@ export default function Footer({
         <div className="flex flex-wrap items-center justify-center gap-4">
           <Link href="/#a-propos" className="hover:text-[var(--primary)]">À propos</Link>
           <span aria-hidden="true">·</span>
-          <Link href="/contact" className="hover:text-[var(--primary)]">Contact</Link>
+          <Link href="/#contact" className="hover:text-[var(--primary)]">Contact</Link>
           <span aria-hidden="true">·</span>
           <Link href="/rgpd" className="hover:text-[var(--primary)]">Confidentialité</Link>
         </div>

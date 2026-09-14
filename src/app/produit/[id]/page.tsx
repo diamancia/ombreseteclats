@@ -6,6 +6,7 @@ import Cart from "@/components/Cart";
 import ProductOrderForm from "@/components/ProductOrderForm";
 import ProductGallery from "@/components/ProductGallery";
 import ProductCard from "@/components/ProductCard";
+import ContactButton from "@/components/ContactButton";
 import { ArrowLeft } from "lucide-react";
 import { connectDb } from "@/lib/mongoose";
 import { Product, Settings } from "@/lib/models";
@@ -93,7 +94,14 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
       </main>
-      <Footer brandName={brandName} socialLinks={(settings as any)?.socialLinks} />
+      <Footer
+        brandName={brandName}
+        socialLinks={(settings as any)?.socialLinks}
+        email={(settings as any)?.email}
+        phone={(settings as any)?.phone}
+        address={(settings as any)?.address}
+      />
+      {siteConfig.features.whatsappButton && <ContactButton phone={(settings as any)?.phone} />}
     </>
   );
 }
