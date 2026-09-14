@@ -20,6 +20,9 @@ const JEWELRY_TYPES: { value: string; label: string }[] = [
   { value: "collier", label: "Collier" },
   { value: "gourmette_cheville", label: "Gourmette cheville" },
   { value: "boucle_oreille", label: "Boucle d'oreille" },
+  { value: "ceinture_traditionnelle", label: "Ceinture traditionnelle" },
+  { value: "broche", label: "Broche" },
+  { value: "perles", label: "Perles" },
 ];
 
 const DIMENSION_LABEL: Record<string, string> = {
@@ -27,6 +30,8 @@ const DIMENSION_LABEL: Record<string, string> = {
   bracelet: "Tour de poignet (cm)",
   collier: "Tour de cou (cm)",
   gourmette_cheville: "Tour de cheville (cm)",
+  ceinture_traditionnelle: "Tour de taille (cm)",
+  perles: "Longueur du rang (cm)",
 };
 
 const STONE_NATURES: { value: StoneAttrs["nature"]; label: string }[] = [

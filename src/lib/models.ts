@@ -47,6 +47,9 @@ const CategorySchema = new Schema(
     active: { type: Boolean, default: true },
     // Collection Femme — cahier des charges 4.6 (catégories dédiées, optionnel)
     gender: { type: String, enum: ["homme", "femme", "mixte"] },
+    // Sous-catégories : une catégorie sans parent est une catégorie principale ; une
+    // catégorie avec parent est une sous-catégorie (un seul niveau de profondeur).
+    parent: { type: Schema.Types.ObjectId, ref: "Category", default: null },
   },
   { timestamps: true }
 );
@@ -100,7 +103,16 @@ const ProductSchema = new Schema(
     // Attributs avancés (bijouterie) — cahier des charges 4.2
     jewelryType: {
       type: String,
-      enum: ["bague", "bracelet", "collier", "gourmette_cheville", "boucle_oreille"],
+      enum: [
+        "bague",
+        "bracelet",
+        "collier",
+        "gourmette_cheville",
+        "boucle_oreille",
+        "ceinture_traditionnelle",
+        "broche",
+        "perles",
+      ],
     },
     dimensionValue: String,
     stone: StoneSchema,
