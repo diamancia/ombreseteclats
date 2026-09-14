@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { adminFetch, uploadImage, IMAGE_PRESETS } from "@/lib/adminClient";
 import { Upload, Save, Plus, Trash2 } from "lucide-react";
 import { MODULES } from "@/lib/modules";
+import { SOCIAL_PLATFORMS, SocialIcon, normalizePlatformKey } from "@/components/SocialIcon";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -430,32 +431,56 @@ function SocialLinksEditor({ value, onChange }: { value: SocialLink[]; onChange:
 
   return (
     <div className="space-y-2">
-      {value.map((s, i) => (
-        <div key={i} className="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
-          <input
-            placeholder="Réseau (ex: Instagram)"
-            value={s.platform}
-            onChange={(e) => update(i, { platform: e.target.value })}
-            className="w-32 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
-          />
-          <input
-            placeholder="https://…"
-            value={s.url}
-            onChange={(e) => update(i, { url: e.target.value })}
-            className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
-          />
-          <label className="flex items-center gap-1 text-xs text-gray-500">
-            <input type="checkbox" checked={s.active !== false} onChange={(e) => update(i, { active: e.target.checked })} />
-            Actif
-          </label>
-          <button type="button" onClick={() => remove(i)} className="text-red-600">
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
-      ))}
+      <p className="text-xs text-gray-400">
+        Coche un réseau, colle son URL directe — il apparaît aussitôt en pied de page avec sa
+        propre icône. Décoche pour le retirer sans perdre le lien enregistré.
+      </p>
+      {value.map((s, i) => {
+        const key = normalizePlatformKey(s.platform);
+        const isCustom = key === "autre";
+        return (
+          <div key={i} className="flex flex-wrap items-center gap-2 rounded-lg bg-gray-50 p-2">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white text-[var(--primary)] ring-1 ring-gray-200">
+              <SocialIcon platform={s.platform} className="h-4 w-4" />
+            </div>
+            <select
+              value={key}
+              onChange={(e) => update(i, { platform: e.target.value === "autre" ? "" : e.target.value })}
+              className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900"
+            >
+              {SOCIAL_PLATFORMS.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+            {isCustom && (
+              <input
+                placeholder="Nom du réseau"
+                value={s.platform}
+                onChange={(e) => update(i, { platform: e.target.value })}
+                className="w-32 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+              />
+            )}
+            <input
+              placeholder="https://…"
+              value={s.url}
+              onChange={(e) => update(i, { url: e.target.value })}
+              className="min-w-[180px] flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+            />
+            <label className="flex items-center gap-1 text-xs text-gray-500">
+              <input type="checkbox" checked={s.active !== false} onChange={(e) => update(i, { active: e.target.checked })} />
+              Actif
+            </label>
+            <button type="button" onClick={() => remove(i)} className="text-red-600">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        );
+      })}
       <button
         type="button"
-        onClick={() => onChange([...value, { platform: "", url: "", active: true }])}
+        onClick={() => onChange([...value, { platform: "instagram", url: "", active: true }])}
         className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
       >
         <Plus className="h-3 w-3" /> Ajouter un réseau social

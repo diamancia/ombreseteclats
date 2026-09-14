@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CreditCard, Award, Headphones, Truck } from "lucide-react";
 import { siteConfig } from "@/site.config";
+import { SocialIcon } from "@/components/SocialIcon";
 
 export type FooterSocialLink = { platform: string; url: string; active?: boolean };
 
@@ -38,16 +39,17 @@ export default function Footer({
         </div>
       </div>
       {activeSocials.length > 0 && (
-        <div className="flex flex-wrap items-center justify-center gap-4 border-t border-[var(--accent)] py-4 text-xs">
+        <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[var(--accent)] py-5">
           {activeSocials.map((s) => (
             <a
               key={s.platform}
               href={s.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="uppercase tracking-wider text-[var(--foreground)]/60 hover:text-[var(--primary)]"
+              aria-label={s.platform}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] transition-colors hover:text-[var(--primary)] hover:ring-[var(--primary)]"
             >
-              {s.platform}
+              <SocialIcon platform={s.platform} className="h-4 w-4" />
             </a>
           ))}
         </div>
