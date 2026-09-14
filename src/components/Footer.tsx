@@ -2,7 +2,16 @@ import Link from "next/link";
 import { CreditCard, Award, Headphones, Truck } from "lucide-react";
 import { siteConfig } from "@/site.config";
 
-export default function Footer({ brandName = siteConfig.brand.name }: { brandName?: string }) {
+export type FooterSocialLink = { platform: string; url: string; active?: boolean };
+
+export default function Footer({
+  brandName = siteConfig.brand.name,
+  socialLinks = [],
+}: {
+  brandName?: string;
+  socialLinks?: FooterSocialLink[];
+}) {
+  const activeSocials = socialLinks.filter((s) => s.active !== false && s.url);
   return (
     <footer className="mt-10 border-t border-[var(--accent)] bg-[var(--muted)]">
       <div className="mx-auto grid max-w-7xl gap-6 px-6 py-10 md:grid-cols-3">
@@ -28,6 +37,21 @@ export default function Footer({ brandName = siteConfig.brand.name }: { brandNam
           </div>
         </div>
       </div>
+      {activeSocials.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-4 border-t border-[var(--accent)] py-4 text-xs">
+          {activeSocials.map((s) => (
+            <a
+              key={s.platform}
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="uppercase tracking-wider text-[var(--foreground)]/60 hover:text-[var(--primary)]"
+            >
+              {s.platform}
+            </a>
+          ))}
+        </div>
+      )}
       <div className="border-t border-[var(--accent)] py-5 text-center text-xs text-[var(--foreground)]/50">
         <div className="flex flex-wrap items-center justify-center gap-4">
           <Link href="/a-propos" className="hover:text-[var(--primary)]">À propos</Link>

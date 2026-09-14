@@ -18,7 +18,7 @@ export default async function AboutPage() {
 
   return (
     <>
-      <Navbar brandName={settings.brandName} />
+      <Navbar brandName={settings.brandName} navLinks={settings.navLinks} />
       <Cart />
       <main className="min-h-screen bg-[var(--background)]">
         {/* Hero about */}
@@ -51,7 +51,7 @@ export default async function AboutPage() {
           </div>
         </section>
       </main>
-      <Footer brandName={settings.brandName} />
+      <Footer brandName={settings.brandName} socialLinks={settings.socialLinks} />
     </>
   );
 }

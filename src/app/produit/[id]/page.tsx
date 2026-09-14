@@ -48,7 +48,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   return (
     <>
-      <Navbar brandName={brandName} />
+      <Navbar brandName={brandName} navLinks={(settings as any)?.navLinks} />
       <Cart />
       <main className="min-h-screen bg-[var(--background)] py-10">
         <div className="mx-auto max-w-6xl px-6">
@@ -93,7 +93,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
       </main>
-      <Footer brandName={brandName} />
+      <Footer brandName={brandName} socialLinks={(settings as any)?.socialLinks} />
     </>
   );
 }

@@ -17,7 +17,7 @@ export default async function SurMesurePage() {
 
   return (
     <>
-      <Navbar brandName={settings.brandName} />
+      <Navbar brandName={settings.brandName} navLinks={settings.navLinks} />
       <Cart />
       <main className="min-h-screen bg-[var(--background)] py-16">
         <div className="mx-auto max-w-3xl px-6">
@@ -35,7 +35,7 @@ export default async function SurMesurePage() {
           <CustomOrderForm settings={settings} />
         </div>
       </main>
-      <Footer brandName={settings.brandName} />
+      <Footer brandName={settings.brandName} socialLinks={settings.socialLinks} />
     </>
   );
 }

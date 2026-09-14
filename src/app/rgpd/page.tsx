@@ -17,7 +17,7 @@ export default async function RgpdPage() {
 
   return (
     <>
-      <Navbar brandName={brand} />
+      <Navbar brandName={brand} navLinks={settings.navLinks} />
       <Cart />
       <main className="min-h-screen bg-[var(--background)] py-16">
         <div className="mx-auto max-w-3xl px-6">
@@ -39,7 +39,7 @@ export default async function RgpdPage() {
           )}
         </div>
       </main>
-      <Footer brandName={brand} />
+      <Footer brandName={brand} socialLinks={settings.socialLinks} />
     </>
   );
 }

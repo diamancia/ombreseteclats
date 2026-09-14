@@ -14,7 +14,7 @@ export default async function CommanderPage() {
 
   return (
     <>
-      <Navbar brandName={settings.brandName} />
+      <Navbar brandName={settings.brandName} navLinks={settings.navLinks} />
       <Cart />
       <main className="min-h-screen bg-[var(--background)] py-16">
         <div className="mx-auto max-w-3xl px-6">
@@ -28,7 +28,7 @@ export default async function CommanderPage() {
           <OrderForm settings={settings} />
         </div>
       </main>
-      <Footer brandName={settings.brandName} />
+      <Footer brandName={settings.brandName} socialLinks={settings.socialLinks} />
     </>
   );
 }

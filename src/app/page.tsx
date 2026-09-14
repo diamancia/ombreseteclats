@@ -36,7 +36,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Navbar brandName={brandName} />
+      <Navbar brandName={brandName} navLinks={settings.navLinks} />
       <Cart />
       <main className="min-h-screen">
         {/* Hero — texte justifié à gauche, chevalière argent à droite */}
@@ -93,6 +93,18 @@ export default async function HomePage() {
             <FeatureItem icon={<Truck className="h-5 w-5 text-[var(--primary)]" />} title="Livraison offerte" text="Expédition en 48h dès 80€" />
           </div>
         </section>
+
+        {/* Bannière publicitaire — cahier des charges 4.10, activable sans redéploiement */}
+        {settings.bannerEnabled && settings.bannerUrl && (
+          <section className="overflow-hidden">
+            <BannerContent
+              type={settings.bannerType}
+              size={settings.bannerSize}
+              url={settings.bannerUrl}
+              link={settings.bannerLink}
+            />
+          </section>
+        )}
 
         {/* Catégories */}
         {categories.length > 0 && (
@@ -195,7 +207,7 @@ export default async function HomePage() {
         </section>
         )}
       </main>
-      <Footer brandName={brandName} />
+      <Footer brandName={brandName} socialLinks={settings.socialLinks} />
 
       {siteConfig.features.whatsappButton && (
         <a
@@ -225,6 +237,37 @@ function SectionHeader({ title }: { title: string }) {
       <div className="mt-3 h-px w-16 bg-[var(--primary)]" />
     </div>
   );
+}
+
+const BANNER_HEIGHTS: Record<string, string> = {
+  compacte: "h-48 md:h-56",
+  standard: "h-72 md:h-96",
+  pleine: "h-[70vh] md:h-[85vh]",
+};
+
+function BannerContent({
+  type,
+  size,
+  url,
+  link,
+}: {
+  type: string;
+  size: string;
+  url: string;
+  link?: string;
+}) {
+  const heightClass = BANNER_HEIGHTS[size] || BANNER_HEIGHTS.standard;
+  const media =
+    type === "video" ? (
+      <video src={url} autoPlay muted loop playsInline className="h-full w-full object-cover" />
+    ) : (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={url} alt="" className="h-full w-full object-cover" />
+    );
+
+  const content = <div className={`relative w-full ${heightClass}`}>{media}</div>;
+
+  return link ? <Link href={link}>{content}</Link> : content;
 }
 
 function FeatureItem({ icon, title, text, divider }: { icon: React.ReactNode; title: string; text: string; divider?: boolean }) {

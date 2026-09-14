@@ -5,11 +5,17 @@ import { ShoppingBag, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { siteConfig } from "@/site.config";
 
-export default function Navbar({ brandName = siteConfig.brand.name }: { brandName?: string }) {
+export default function Navbar({
+  brandName = siteConfig.brand.name,
+  navLinks = siteConfig.navbar.links,
+}: {
+  brandName?: string;
+  navLinks?: { href: string; label: string }[];
+}) {
   const { cartCount, setCartOpen } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const links = siteConfig.navbar.links.filter((l) => {
+  const links = navLinks.filter((l) => {
     if (l.href === "/sur-mesure" && !siteConfig.features.customOrders) return false;
     return true;
   });
