@@ -35,6 +35,9 @@ export interface SiteConfig {
     primaryDark: string;
     accent: string;
     muted: string;
+    // Accent réservé à la collection Femme — cahier des charges 4.6 (section 5 : pas de thème
+    // clair global, l'or rosé n'est utilisé que localement sur les blocs/badges Femme).
+    roseGold: string;
   };
   meta: { title: string; description: string };
   hero: { defaultTitle: string; defaultSubtitle: string; defaultImageUrl: string };
@@ -87,6 +90,7 @@ export const siteConfig: SiteConfig = {
     primaryDark: "#e8dfc8",    // hover plus clair
     accent: "#2a2a2a",          // gris très foncé (bordures, cartes)
     muted: "#141414",           // noir charbon (sections, cards)
+    roseGold: "#C9A08A",        // or rosé discret — réservé à la collection Femme
   },
 
   meta: {
@@ -112,7 +116,8 @@ export const siteConfig: SiteConfig = {
   navbar: {
     links: [
       { href: "/", label: "Accueil" },
-      { href: "/catalogue", label: "Collections" },
+      { href: "/catalogue?genre=homme", label: "Collections Homme" },
+      { href: "/catalogue?genre=femme", label: "Collections Femme" },
       { href: "/sur-mesure", label: "Sur-mesure" },
       { href: "/a-propos", label: "Maison" },
       { href: "/contact", label: "Contact" },

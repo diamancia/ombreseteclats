@@ -8,6 +8,8 @@ const CategorySchema = new Schema(
     emoji: { type: String, default: "" },
     imageUrl: { type: String, default: "" },
     active: { type: Boolean, default: true },
+    // Collection Femme — cahier des charges 4.6 (catégories dédiées, optionnel)
+    gender: { type: String, enum: ["homme", "femme", "mixte"] },
   },
   { timestamps: true }
 );
@@ -54,6 +56,8 @@ const ProductSchema = new Schema(
     images: { type: [String], default: [] },
     allergens: String,
     category: { type: Schema.Types.ObjectId, ref: "Category" },
+    // Collection Femme — cahier des charges 4.6
+    gender: { type: String, enum: ["homme", "femme", "mixte"], default: "homme" },
     flavors: [FlavorSchema],
     sizes: [SizeSchema],
     // Attributs avancés (bijouterie) — cahier des charges 4.2

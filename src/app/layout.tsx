@@ -24,6 +24,7 @@ const themeVars = `:root{
   --primary-dark:${siteConfig.theme.primaryDark};
   --accent:${siteConfig.theme.accent};
   --muted:${siteConfig.theme.muted};
+  --rose-gold:${siteConfig.theme.roseGold};
 }`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

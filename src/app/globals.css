@@ -7,6 +7,7 @@
   --primary-dark: #7d3541;
   --accent: #f5e6e3;
   --muted: #faf0ec;
+  --rose-gold: #c9a08a;
 }
 
 @theme inline {
@@ -16,6 +17,7 @@
   --color-primary-dark: var(--primary-dark);
   --color-accent: var(--accent);
   --color-muted: var(--muted);
+  --color-rose-gold: var(--rose-gold);
   --font-sans: var(--font-inter);
   --font-serif: var(--font-playfair);
 }
