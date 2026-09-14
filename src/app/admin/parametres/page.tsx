@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { adminFetch, uploadImage, IMAGE_PRESETS } from "@/lib/adminClient";
-import { Upload, Save } from "lucide-react";
+import { Upload, Save, Plus, Trash2 } from "lucide-react";
+import { MODULES } from "@/lib/modules";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -9,6 +10,7 @@ export default function AdminSettingsPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [uploadingHero, setUploadingHero] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings").then((r) => r.json()).then(setSettings);
@@ -47,6 +49,20 @@ export default function AdminSettingsPage() {
     }
   }
 
+  async function handleBanner(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploadingBanner(true);
+    try {
+      const url = await uploadImage(f, IMAGE_PRESETS.hero);
+      setSettings({ ...settings, bannerUrl: url });
+    } catch (e: any) {
+      setErr(e.message);
+    } finally {
+      setUploadingBanner(false);
+    }
+  }
+
   return (
     <div className="max-w-3xl">
       <h1 className="mb-8 font-serif text-3xl">Paramètres</h1>
@@ -55,6 +71,10 @@ export default function AdminSettingsPage() {
         <Card title="Identité de la marque">
           <Field label="Nom" value={settings.brandName || ""} onChange={(v) => setSettings({ ...settings, brandName: v })} />
           <Field label="Tagline" value={settings.brandTagline || ""} onChange={(v) => setSettings({ ...settings, brandTagline: v })} />
+        </Card>
+
+        <Card title="Navigation (barre du haut)">
+          <NavLinksEditor value={settings.navLinks || []} onChange={(v) => setSettings({ ...settings, navLinks: v })} />
         </Card>
 
         <Card title="Page d'accueil (Hero)">
@@ -84,13 +104,95 @@ export default function AdminSettingsPage() {
           </div>
         </Card>
 
+        <Card title="Bannière publicitaire (pleine largeur)">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={!!settings.bannerEnabled}
+              onChange={(e) => setSettings({ ...settings, bannerEnabled: e.target.checked })}
+            />
+            <span className="text-sm">Afficher la bannière sur la page d&apos;accueil</span>
+          </label>
+
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Type de média</label>
+            <div className="flex gap-2">
+              {(["photo", "video"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setSettings({ ...settings, bannerType: t })}
+                  className={`rounded-full px-4 py-2 text-xs font-medium capitalize transition-colors ${
+                    (settings.bannerType || "photo") === t
+                      ? "bg-[var(--primary)] text-[var(--background)]"
+                      : "border border-gray-200 text-gray-500"
+                  }`}
+                >
+                  {t === "photo" ? "Photo" : "Vidéo"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Taille d&apos;affichage</label>
+            <div className="flex gap-2">
+              {(["compacte", "standard", "pleine"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSettings({ ...settings, bannerSize: s })}
+                  className={`rounded-full px-4 py-2 text-xs font-medium capitalize transition-colors ${
+                    (settings.bannerSize || "standard") === s
+                      ? "bg-[var(--primary)] text-[var(--background)]"
+                      : "border border-gray-200 text-gray-500"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {(settings.bannerType || "photo") === "photo" ? (
+            <div>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Image</label>
+              <div className="flex items-center gap-4">
+                {settings.bannerUrl && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={settings.bannerUrl} alt="Bannière" className="h-16 w-28 rounded-lg object-cover ring-2 ring-gray-200" />
+                )}
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--primary)] px-4 py-2 text-xs text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]">
+                  <Upload className="h-4 w-4" /> {uploadingBanner ? "Upload…" : "Changer l'image"}
+                  <input type="file" accept="image/*" onChange={handleBanner} className="hidden" />
+                </label>
+              </div>
+              <div className="mt-2">
+                <Field label="Ou URL directe" value={settings.bannerUrl || ""} onChange={(v) => setSettings({ ...settings, bannerUrl: v })} />
+              </div>
+            </div>
+          ) : (
+            <Field
+              label="URL de la vidéo (lien direct, YouTube ou Vimeo)"
+              value={settings.bannerUrl || ""}
+              onChange={(v) => setSettings({ ...settings, bannerUrl: v })}
+            />
+          )}
+
+          <Field
+            label="Lien au clic (optionnel)"
+            value={settings.bannerLink || ""}
+            onChange={(v) => setSettings({ ...settings, bannerLink: v })}
+          />
+        </Card>
+
         <Card title="Contact">
           <Field label="Email" type="email" value={settings.email || ""} onChange={(v) => setSettings({ ...settings, email: v })} />
           <Field label="Téléphone" value={settings.phone || ""} onChange={(v) => setSettings({ ...settings, phone: v })} />
           <Field label="Zone de livraison" value={settings.zone || ""} onChange={(v) => setSettings({ ...settings, zone: v })} />
         </Card>
 
-        <Card title="Réseaux sociaux">
+        <Card title="Réseaux sociaux — Publication automatique">
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -102,6 +204,10 @@ export default function AdminSettingsPage() {
           <p className="text-xs text-gray-400">
             Le bouton « Publier » reste toujours disponible sur chaque produit pour republier ou forcer une publication manuelle, même en mode automatique.
           </p>
+        </Card>
+
+        <Card title="Pied de page — Réseaux sociaux">
+          <SocialLinksEditor value={settings.socialLinks || []} onChange={(v) => setSettings({ ...settings, socialLinks: v })} />
         </Card>
 
         <Card title="Créneaux de retrait">
@@ -126,6 +232,13 @@ export default function AdminSettingsPage() {
               className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
             />
           </div>
+        </Card>
+
+        <Card title="Modules">
+          <p className="text-xs text-gray-400">
+            Active ou désactive les fonctionnalités du site — aucune installation, tout est déjà intégré au code.
+          </p>
+          <ModulesPanel value={settings.moduleFlags || {}} onChange={(v) => setSettings({ ...settings, moduleFlags: v })} />
         </Card>
 
         <Card title="Mot de passe admin">
@@ -244,6 +357,135 @@ function ClosedDatesPicker({ value, onChange }: { value: string[]; onChange: (v:
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+type NavLink = { href: string; label: string };
+
+function NavLinksEditor({ value, onChange }: { value: NavLink[]; onChange: (v: NavLink[]) => void }) {
+  function update(idx: number, patch: Partial<NavLink>) {
+    onChange(value.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+  }
+  function remove(idx: number) {
+    onChange(value.filter((_, i) => i !== idx));
+  }
+  function move(idx: number, dir: -1 | 1) {
+    const target = idx + dir;
+    if (target < 0 || target >= value.length) return;
+    const next = [...value];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-2">
+      {value.map((l, i) => (
+        <div key={i} className="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
+          <div className="flex flex-col">
+            <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">
+              ▲
+            </button>
+            <button type="button" onClick={() => move(i, 1)} disabled={i === value.length - 1} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">
+              ▼
+            </button>
+          </div>
+          <input
+            placeholder="Libellé"
+            value={l.label}
+            onChange={(e) => update(i, { label: e.target.value })}
+            className="w-40 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+          />
+          <input
+            placeholder="/chemin"
+            value={l.href}
+            onChange={(e) => update(i, { href: e.target.value })}
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+          />
+          <button type="button" onClick={() => remove(i)} className="text-red-600">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...value, { href: "/", label: "Nouveau lien" }])}
+        className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
+      >
+        <Plus className="h-3 w-3" /> Ajouter un lien de navigation
+      </button>
+    </div>
+  );
+}
+
+type SocialLink = { platform: string; url: string; active: boolean };
+
+function SocialLinksEditor({ value, onChange }: { value: SocialLink[]; onChange: (v: SocialLink[]) => void }) {
+  function update(idx: number, patch: Partial<SocialLink>) {
+    onChange(value.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+  }
+  function remove(idx: number) {
+    onChange(value.filter((_, i) => i !== idx));
+  }
+
+  return (
+    <div className="space-y-2">
+      {value.map((s, i) => (
+        <div key={i} className="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
+          <input
+            placeholder="Réseau (ex: Instagram)"
+            value={s.platform}
+            onChange={(e) => update(i, { platform: e.target.value })}
+            className="w-32 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+          />
+          <input
+            placeholder="https://…"
+            value={s.url}
+            onChange={(e) => update(i, { url: e.target.value })}
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+          />
+          <label className="flex items-center gap-1 text-xs text-gray-500">
+            <input type="checkbox" checked={s.active !== false} onChange={(e) => update(i, { active: e.target.checked })} />
+            Actif
+          </label>
+          <button type="button" onClick={() => remove(i)} className="text-red-600">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...value, { platform: "", url: "", active: true }])}
+        className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
+      >
+        <Plus className="h-3 w-3" /> Ajouter un réseau social
+      </button>
+    </div>
+  );
+}
+
+function ModulesPanel({ value, onChange }: { value: Record<string, boolean>; onChange: (v: Record<string, boolean>) => void }) {
+  return (
+    <div className="space-y-2">
+      {MODULES.map((m) => {
+        const active = value[m.key] !== false;
+        return (
+          <div key={m.key} className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 p-3">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{m.label}</p>
+              <p className="text-xs text-gray-400">{m.description}</p>
+            </div>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={active}
+                onChange={(e) => onChange({ ...value, [m.key]: e.target.checked })}
+              />
+              <span className="text-xs text-gray-500">{active ? "Actif" : "Inactif"}</span>
+            </label>
+          </div>
+        );
+      })}
     </div>
   );
 }

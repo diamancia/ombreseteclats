@@ -35,10 +35,12 @@ function stoneToText(stone?: ProductAttrs["stone"]): string | undefined {
 
 export default function MultiPhotoImport({
   categories,
+  aiEnabled = true,
   onClose,
   onImported,
 }: {
   categories: any[];
+  aiEnabled?: boolean;
   onClose: () => void;
   onImported: () => void;
 }) {
@@ -104,7 +106,7 @@ export default function MultiPhotoImport({
       status: "idle",
     }));
     setItems((prev) => [...prev, ...newItems]);
-    newItems.forEach((it) => runAiDescribe(it.id));
+    if (aiEnabled) newItems.forEach((it) => runAiDescribe(it.id));
   }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -236,12 +238,12 @@ export default function MultiPhotoImport({
                   <div className="mt-3 rounded-lg bg-gray-50 p-3">
                     <div className="mb-1.5 flex items-center justify-between">
                       <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--primary)]">
-                        <Sparkles className="h-3 w-3" /> Généré par IA
+                        {aiEnabled && <Sparkles className="h-3 w-3" />} {aiEnabled ? "Généré par IA" : "Description"}
                       </span>
-                      {(it.status === "uploading" || it.status === "ai-loading") && (
+                      {aiEnabled && (it.status === "uploading" || it.status === "ai-loading") && (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />
                       )}
-                      {it.status === "ready" && (
+                      {aiEnabled && it.status === "ready" && (
                         <button
                           type="button"
                           onClick={() => runAiDescribe(it.id)}
