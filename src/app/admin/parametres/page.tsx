@@ -191,6 +191,14 @@ export default function AdminSettingsPage() {
           <Field label="Email" type="email" value={settings.email || ""} onChange={(v) => setSettings({ ...settings, email: v })} />
           <Field label="Téléphone" value={settings.phone || ""} onChange={(v) => setSettings({ ...settings, phone: v })} />
           <Field label="Zone de livraison" value={settings.zone || ""} onChange={(v) => setSettings({ ...settings, zone: v })} />
+          <Field
+            label="Adresse (affiche une carte Google Maps sur la page Contact)"
+            value={settings.address || ""}
+            onChange={(v) => setSettings({ ...settings, address: v })}
+          />
+          <p className="text-xs text-gray-400">
+            Laisser vide si vous n&apos;avez pas de boutique/atelier ouvert au public — aucune carte ne s&apos;affichera.
+          </p>
         </Card>
 
         <Card title="Réseaux sociaux — Publication automatique">

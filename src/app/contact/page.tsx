@@ -35,6 +35,21 @@ export default async function ContactPage() {
             )}
           </div>
 
+          {settings.address && process.env.GOOGLE_MAPS_API_KEY && (
+            <div className="mt-12 overflow-hidden rounded-2xl shadow-sm">
+              <iframe
+                title="Localisation"
+                width="100%"
+                height="320"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(settings.address)}`}
+              />
+            </div>
+          )}
+
           <div className="mt-12 rounded-2xl bg-[var(--muted)] p-8 shadow-sm">
             <h2 className="mb-4 font-serif text-2xl">Une demande sur-mesure ?</h2>
             <p className="text-sm text-[var(--foreground)]/70">

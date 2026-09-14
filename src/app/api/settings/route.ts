@@ -19,6 +19,7 @@ export async function GET() {
       slots: siteConfig.defaults.slots,
       openWeekdays: siteConfig.defaults.openWeekdays,
       minDelay: siteConfig.defaults.minDelay,
+      address: "",
       socialAutoPublish: true,
       navLinks: siteConfig.navbar.links,
       socialLinks: [],

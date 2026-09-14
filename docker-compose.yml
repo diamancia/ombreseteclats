@@ -22,5 +22,6 @@ services:
       - META_PAGE_ID=${META_PAGE_ID}
       - META_IG_BUSINESS_ACCOUNT_ID=${META_IG_BUSINESS_ACCOUNT_ID}
       - RESEND_API_KEY=${RESEND_API_KEY}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
     extra_hosts:
       - "host.docker.internal:host-gateway"

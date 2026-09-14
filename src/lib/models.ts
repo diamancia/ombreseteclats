@@ -183,6 +183,9 @@ const SettingsSchema = new Schema(
     email: String,
     phone: String,
     zone: String,
+    // Carte Google Maps page Contact — cahier des charges 4.7. Optionnel : sans adresse
+    // renseignée, la carte ne s'affiche pas (site sans boutique physique par défaut).
+    address: { type: String, default: "" },
     adminPassword: { type: String, required: true },
     slots: { type: [String], default: () => siteConfig.defaults.slots },
     openWeekdays: { type: [Number], default: () => siteConfig.defaults.openWeekdays },
