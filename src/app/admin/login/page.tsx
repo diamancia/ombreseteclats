@@ -3,10 +3,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { siteConfig } from "@/site.config";
-import { TOKEN_KEY } from "@/lib/storage";
+import { TOKEN_KEY, USER_KEY } from "@/lib/storage";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,11 +20,12 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email: email || undefined, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
       localStorage.setItem(TOKEN_KEY, data.token);
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user || {}));
       router.push("/admin");
     } catch (err: any) {
       setError(err.message);
@@ -42,6 +44,15 @@ export default function AdminLoginPage() {
           <h1 className="font-serif text-2xl text-gray-900">Admin {siteConfig.brand.name}</h1>
           <p className="mt-1 text-xs text-gray-500">Connectez-vous pour continuer</p>
         </div>
+        <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-700">
+          Email <span className="normal-case font-normal text-gray-400">(laisser vide pour le compte superadmin)</span>
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="mb-4 w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[#6c5ce7] focus:outline-none"
+        />
         <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-700">Mot de passe</label>
         <input
           type="password"

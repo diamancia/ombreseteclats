@@ -2,22 +2,29 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Package, Tag, ClipboardList, Settings as SettingsIcon, LogOut, Home } from "lucide-react";
+import { LayoutDashboard, Package, Tag, ClipboardList, Settings as SettingsIcon, LogOut, Home, Users, Bell } from "lucide-react";
 import { siteConfig } from "@/site.config";
-import { TOKEN_KEY } from "@/lib/storage";
+import { TOKEN_KEY, USER_KEY } from "@/lib/storage";
+import { PermissionKey } from "@/lib/modules";
 
-const nav = [
+const nav: { href: string; label: string; icon: any; perm?: PermissionKey }[] = [
   { href: "/admin", label: "Tableau de bord", icon: LayoutDashboard },
-  { href: "/admin/produits", label: "Produits", icon: Package },
-  { href: "/admin/categories", label: "Catégories", icon: Tag },
-  { href: "/admin/commandes", label: "Commandes", icon: ClipboardList },
-  { href: "/admin/parametres", label: "Paramètres", icon: SettingsIcon },
+  { href: "/admin/produits", label: "Produits", icon: Package, perm: "produits" },
+  { href: "/admin/categories", label: "Catégories", icon: Tag, perm: "categories" },
+  { href: "/admin/commandes", label: "Commandes", icon: ClipboardList, perm: "commandes" },
+  { href: "/admin/notifications", label: "Messagerie", icon: Bell },
+  { href: "/admin/parametres", label: "Paramètres", icon: SettingsIcon, perm: "parametres" },
+  { href: "/admin/utilisateurs", label: "Utilisateurs", icon: Users, perm: "utilisateurs" },
 ];
+
+type StoredUser = { name?: string; role?: string; modules?: PermissionKey[] };
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [checking, setChecking] = useState(true);
+  const [user, setUser] = useState<StoredUser | null>(null);
+  const [unread, setUnread] = useState(0);
 
   useEffect(() => {
     if (pathname === "/admin/login") {
@@ -27,18 +34,38 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
       router.replace("/admin/login");
-    } else {
-      setChecking(false);
+      return;
     }
+    try {
+      setUser(JSON.parse(localStorage.getItem(USER_KEY) || "{}"));
+    } catch {
+      setUser({});
+    }
+    setChecking(false);
   }, [pathname, router]);
+
+  useEffect(() => {
+    if (checking) return;
+    fetch("/api/notifications", { headers: { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setUnread(d.unread))
+      .catch(() => {});
+  }, [checking, pathname]);
 
   if (pathname === "/admin/login") return <>{children}</>;
   if (checking) return <div className="flex min-h-screen items-center justify-center">Chargement…</div>;
 
   function logout() {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
     router.push("/admin/login");
   }
+
+  const visibleNav = nav.filter((n) => {
+    if (!n.perm) return true;
+    if (user?.role === "admin") return true;
+    return user?.modules?.includes(n.perm);
+  });
 
   return (
     <div
@@ -59,7 +86,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           </Link>
         </div>
         <nav className="space-y-1 p-3">
-          {nav.map((n) => {
+          {visibleNav.map((n) => {
             const active = pathname === n.href;
             const Icon = n.icon;
             return (
@@ -74,6 +101,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               >
                 <Icon className="h-4 w-4" />
                 {n.label}
+                {n.href === "/admin/notifications" && unread > 0 && (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white">
+                    {unread}
+                  </span>
+                )}
               </Link>
             );
           })}
