@@ -236,7 +236,7 @@ export default function AdminSettingsPage() {
           />
         </Card>
 
-        <Card title="Contact">
+        <Card title="Contact" id="card-contact">
           <Field label="Email" type="email" value={settings.email || ""} onChange={(v) => setSettings({ ...settings, email: v })} />
           <Field label="Téléphone" value={settings.phone || ""} onChange={(v) => setSettings({ ...settings, phone: v })} />
           <Field label="Zone de livraison" value={settings.zone || ""} onChange={(v) => setSettings({ ...settings, zone: v })} />
@@ -380,15 +380,17 @@ export default function AdminSettingsPage() {
 
 function Card({
   title,
+  id,
   actions,
   children,
 }: {
   title: string;
+  id?: string;
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm">
+    <div id={id} className="scroll-mt-6 rounded-2xl bg-white p-6 shadow-sm transition-shadow target:ring-2 target:ring-[var(--primary)]">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="font-serif text-xl">{title}</h2>
         {actions}
@@ -487,6 +489,19 @@ function ClosedDatesPicker({ value, onChange }: { value: string[]; onChange: (v:
 
 type NavLink = { href: string; label: string };
 
+// Où envoie le bouton "Éditer" d'un lien de nav : édition directe sur la page quand le
+// contenu vient de Paramètres (Accueil = Hero + À propos), sinon vers l'écran admin qui
+// gère réellement ce contenu (Boutique -> Produits), sinon un simple aperçu de la page.
+function editActionFor(href: string): { kind: "inline" | "scroll" | "admin" | "preview"; url: string } {
+  if (!href || href === "/") return { kind: "inline", url: "/?edit=1" };
+  if (href.startsWith("/#")) {
+    if (href === "/#contact") return { kind: "scroll", url: "/admin/parametres#card-contact" };
+    return { kind: "inline", url: `/?edit=1${href.slice(1)}` };
+  }
+  if (href.startsWith("/catalogue")) return { kind: "admin", url: "/admin/produits" };
+  return { kind: "preview", url: href };
+}
+
 function NavLinksEditor({ value, onChange }: { value: NavLink[]; onChange: (v: NavLink[]) => void }) {
   function update(idx: number, patch: Partial<NavLink>) {
     onChange(value.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
@@ -501,9 +516,22 @@ function NavLinksEditor({ value, onChange }: { value: NavLink[]; onChange: (v: N
     [next[idx], next[target]] = [next[target], next[idx]];
     onChange(next);
   }
+  function openEditor(href: string) {
+    const action = editActionFor(href);
+    if (action.kind === "scroll") {
+      window.location.hash = "";
+      window.location.href = action.url;
+      return;
+    }
+    window.open(action.url, "_blank");
+  }
 
   return (
     <div className="space-y-2">
+      <p className="text-xs text-gray-400">
+        Le crayon ouvre directement le contenu de cette page : édition en direct sur la page pour
+        l&apos;accueil, écran dédié pour la boutique, sinon un aperçu de la page.
+      </p>
       {value.map((l, i) => (
         <div key={i} className="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
           <div className="flex flex-col">
@@ -526,6 +554,14 @@ function NavLinksEditor({ value, onChange }: { value: NavLink[]; onChange: (v: N
             onChange={(e) => update(i, { href: e.target.value })}
             className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
           />
+          <button
+            type="button"
+            onClick={() => openEditor(l.href)}
+            title="Éditer le contenu de cette page"
+            className="text-[var(--primary)] hover:text-[var(--primary-dark)]"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
           <button type="button" onClick={() => remove(i)} className="text-red-600">
             <Trash2 className="h-4 w-4" />
           </button>

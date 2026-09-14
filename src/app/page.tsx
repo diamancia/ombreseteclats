@@ -6,6 +6,8 @@ import Cart from "@/components/Cart";
 import AddToCartButton from "@/components/AddToCartButton";
 import ProductCard from "@/components/ProductCard";
 import ContactButton from "@/components/ContactButton";
+import EditModeProvider from "@/components/admin/EditMode";
+import InlineEditableText from "@/components/admin/InlineEditableText";
 import { connectDb } from "@/lib/mongoose";
 import { Product, Category, Settings } from "@/lib/models";
 import { siteConfig } from "@/site.config";
@@ -36,7 +38,7 @@ export default async function HomePage() {
   const about = settings.about?.trim() || getLegalPreset().about;
 
   return (
-    <>
+    <EditModeProvider>
       <Navbar
         brandName={brandName}
         navLinks={settings.navLinks}
@@ -55,12 +57,19 @@ export default async function HomePage() {
               <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.4em] text-[var(--primary)]">
                 Spécial Argent 925
               </p>
-              <h1 className="font-serif text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">
-                {heroTitle}
-              </h1>
-              <p className="mt-8 max-w-xl text-justify text-base leading-relaxed text-[#f5f1e8]/70">
-                {heroSubtitle}
-              </p>
+              <InlineEditableText
+                as="h1"
+                field="heroTitle"
+                value={heroTitle}
+                className="font-serif text-4xl leading-[1.05] sm:text-5xl lg:text-6xl"
+              />
+              <InlineEditableText
+                as="p"
+                field="heroSubtitle"
+                value={heroSubtitle}
+                multiline
+                className="mt-8 max-w-xl text-justify text-base leading-relaxed text-[#f5f1e8]/70"
+              />
               <div className="mt-10 flex flex-wrap gap-3">
                 <Link
                   href="/catalogue"
@@ -205,9 +214,13 @@ export default async function HomePage() {
               <h2 className="font-serif text-3xl tracking-wider">À PROPOS DE {brandName.toUpperCase()}</h2>
               <div className="mt-3 h-px w-16 bg-[var(--primary)]" />
             </div>
-            <div className="mx-auto max-w-2xl whitespace-pre-line text-center text-sm leading-relaxed text-[var(--foreground)]/75">
-              {about}
-            </div>
+            <InlineEditableText
+              as="div"
+              field="about"
+              value={about}
+              multiline
+              className="mx-auto max-w-2xl whitespace-pre-line text-center text-sm leading-relaxed text-[var(--foreground)]/75"
+            />
             <div className="mx-auto mt-10 grid max-w-3xl gap-6 sm:grid-cols-3">
               <Value icon={<Hammer className="h-5 w-5" />} title="Façonné main" text="Chaque pièce travaillée dans notre atelier." />
               <Value icon={<Gem className="h-5 w-5" />} title="Argent 925 poinçonné" text="Matière noble garantie à vie." />
@@ -219,7 +232,7 @@ export default async function HomePage() {
       <Footer brandName={brandName} navLinks={settings.navLinks} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
 
       {siteConfig.features.whatsappButton && <ContactButton phone={settings.phone} />}
-    </>
+    </EditModeProvider>
   );
 }
 
