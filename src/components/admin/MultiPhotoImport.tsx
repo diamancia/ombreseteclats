@@ -12,6 +12,7 @@ type ImportItem = ProductAttrs & {
   name: string;
   basePrice: number;
   category: string;
+  gender: "homme" | "femme" | "mixte";
   shortDesc: string;
   longDesc: string;
   hashtags: string[];
@@ -96,6 +97,7 @@ export default function MultiPhotoImport({
       name: fileNameToProductName(file.name),
       basePrice: 0,
       category: "",
+      gender: "homme",
       shortDesc: "",
       longDesc: "",
       hashtags: [],
@@ -136,6 +138,7 @@ export default function MultiPhotoImport({
           name: it.name,
           basePrice: it.basePrice,
           category: it.category || null,
+          gender: it.gender,
           imageUrl: it.uploadedUrl,
           images: [it.uploadedUrl],
           shortDesc: it.shortDesc,
@@ -215,6 +218,15 @@ export default function MultiPhotoImport({
                           ))}
                         </select>
                       </div>
+                      <select
+                        value={it.gender}
+                        onChange={(e) => updateItem(it.id, { gender: e.target.value as ImportItem["gender"] })}
+                        className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 focus:border-[var(--primary)] focus:outline-none"
+                      >
+                        <option value="homme">Homme</option>
+                        <option value="femme">Femme</option>
+                        <option value="mixte">Mixte</option>
+                      </select>
                     </div>
                     <button onClick={() => removeItem(it.id)} className="h-fit text-red-600">
                       <X className="h-4 w-4" />

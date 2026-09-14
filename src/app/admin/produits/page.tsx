@@ -71,6 +71,7 @@ export default function AdminProductsPage() {
       imageUrl: "",
       images: [],
       category: "",
+      gender: "homme",
       delay: 2,
       shortDesc: "",
       longDesc: "",
@@ -338,7 +339,7 @@ function ProductModal({ initial, categories, onClose, onSaved }: { initial: any;
             <Field label={siteConfig.product.allergensLabel} value={form.allergens} onChange={(v) => setForm({ ...form, allergens: v })} />
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Statut</label>
               <select
@@ -350,6 +351,18 @@ function ProductModal({ initial, categories, onClose, onSaved }: { initial: any;
                 <option value="unavailable">Indisponible</option>
                 <option value="soon">Bientôt</option>
                 <option value="pending">À valider</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Collection</label>
+              <select
+                value={form.gender || "homme"}
+                onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
+              >
+                <option value="homme">Homme</option>
+                <option value="femme">Femme</option>
+                <option value="mixte">Mixte</option>
               </select>
             </div>
             <label className="flex items-center gap-2 pt-6">

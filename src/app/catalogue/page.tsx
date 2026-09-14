@@ -8,6 +8,14 @@ import { Product, Category, Settings } from "@/lib/models";
 
 export const dynamic = "force-dynamic";
 
+function catalogueHref(params: { cat?: string; genre?: string }) {
+  const qs = new URLSearchParams();
+  if (params.cat) qs.set("cat", params.cat);
+  if (params.genre) qs.set("genre", params.genre);
+  const s = qs.toString();
+  return s ? `/catalogue?${s}` : "/catalogue";
+}
+
 async function loadData() {
   await connectDb();
   const [products, categories, settings] = await Promise.all([
@@ -25,13 +33,13 @@ async function loadData() {
 export default async function CataloguePage({
   searchParams,
 }: {
-  searchParams: Promise<{ cat?: string }>;
+  searchParams: Promise<{ cat?: string; genre?: string }>;
 }) {
   const sp = await searchParams;
   const { products, categories, settings } = await loadData();
-  const filtered = sp.cat
-    ? products.filter((p: any) => p.category?._id === sp.cat)
-    : products;
+  const filtered = products
+    .filter((p: any) => !sp.cat || p.category?._id === sp.cat)
+    .filter((p: any) => !sp.genre || (p.gender || "homme") === sp.genre);
 
   return (
     <>
@@ -44,21 +52,49 @@ export default async function CataloguePage({
             <div className="mt-3 h-px w-16 bg-[var(--primary)]" />
           </div>
 
+          <div className="mb-6 flex flex-wrap justify-center gap-3">
+            {[
+              { key: undefined, label: "Tout" },
+              { key: "homme", label: "Collections Homme" },
+              { key: "femme", label: "Collections Femme" },
+            ].map((g) => {
+              const active = (sp.genre || undefined) === g.key;
+              const isFemme = g.key === "femme";
+              return (
+                <Link
+                  key={g.label}
+                  href={catalogueHref({ cat: sp.cat, genre: g.key })}
+                  className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
+                    active
+                      ? isFemme
+                        ? "bg-[var(--rose-gold)] text-white"
+                        : "bg-[var(--primary)] text-[var(--background)]"
+                      : isFemme
+                      ? "border border-[var(--rose-gold)] text-[var(--rose-gold)] hover:bg-[var(--rose-gold)] hover:text-white"
+                      : "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
+                  }`}
+                >
+                  {g.label}
+                </Link>
+              );
+            })}
+          </div>
+
           <div className="mb-10 flex flex-wrap justify-center gap-3">
             <Link
-              href="/catalogue"
+              href={catalogueHref({ genre: sp.genre })}
               className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
                 !sp.cat
                   ? "bg-[var(--primary)] text-[var(--background)]"
                   : "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
               }`}
             >
-              Tout
+              Toutes les catégories
             </Link>
             {categories.map((c: any) => (
               <Link
                 key={c._id}
-                href={`/catalogue?cat=${c._id}`}
+                href={catalogueHref({ cat: c._id, genre: sp.genre })}
                 className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
                   sp.cat === c._id
                     ? "bg-[var(--primary)] text-[var(--background)]"
@@ -77,7 +113,11 @@ export default async function CataloguePage({
               {filtered.map((p: any) => (
                 <article key={p._id} className="group overflow-hidden rounded-lg bg-[var(--muted)] shadow-sm hover:shadow-lg">
                   {p.isNew && (
-                    <span className="absolute z-10 m-3 rounded bg-[var(--primary)] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[var(--background)]">
+                    <span
+                      className={`absolute z-10 m-3 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${
+                        p.gender === "femme" ? "bg-[var(--rose-gold)] text-white" : "bg-[var(--primary)] text-[var(--background)]"
+                      }`}
+                    >
                       Nouveau
                     </span>
                   )}
@@ -93,7 +133,9 @@ export default async function CataloguePage({
                   </Link>
                   <div className="p-4">
                     {p.category && (
-                      <p className="mb-1 text-[10px] uppercase tracking-wider text-[var(--primary)]">{p.category.name}</p>
+                      <p className={`mb-1 text-[10px] uppercase tracking-wider ${p.gender === "femme" ? "text-[var(--rose-gold)]" : "text-[var(--primary)]"}`}>
+                        {p.category.name}
+                      </p>
                     )}
                     <Link href={`/produit/${p._id}`}>
                       <h3 className="line-clamp-1 font-medium hover:text-[var(--primary)]">{p.name}</h3>
