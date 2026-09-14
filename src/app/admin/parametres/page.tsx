@@ -90,6 +90,20 @@ export default function AdminSettingsPage() {
           <Field label="Zone de livraison" value={settings.zone || ""} onChange={(v) => setSettings({ ...settings, zone: v })} />
         </Card>
 
+        <Card title="Réseaux sociaux">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={settings.socialAutoPublish !== false}
+              onChange={(e) => setSettings({ ...settings, socialAutoPublish: e.target.checked })}
+            />
+            <span className="text-sm">Publier automatiquement un produit validé sur Facebook / Instagram</span>
+          </label>
+          <p className="text-xs text-gray-400">
+            Le bouton « Publier » reste toujours disponible sur chaque produit pour republier ou forcer une publication manuelle, même en mode automatique.
+          </p>
+        </Card>
+
         <Card title="Créneaux de retrait">
           <Field
             label="Créneaux (séparés par virgule)"

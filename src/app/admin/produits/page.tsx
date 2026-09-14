@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { adminFetch, uploadImage, IMAGE_PRESETS } from "@/lib/adminClient";
-import { Plus, Edit, Trash2, Upload, X } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, X, Share2, Loader2 } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import ProductAttributesFields from "@/components/admin/ProductAttributesFields";
 import MultiPhotoImport from "@/components/admin/MultiPhotoImport";
@@ -12,17 +12,21 @@ const V2 = siteConfig.product.variant2;
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>(null);
   const [editing, setEditing] = useState<any | null>(null);
   const [importing, setImporting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   async function load() {
-    const [p, c] = await Promise.all([
+    const [p, c, s] = await Promise.all([
       fetch("/api/products", { cache: "no-store" }).then((r) => r.json()),
       fetch("/api/categories?all=true", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/settings", { cache: "no-store" }).then((r) => r.json()),
     ]);
     setProducts(p);
     setCategories(c);
+    setSettings(s);
     setLoading(false);
   }
   useEffect(() => {
@@ -35,9 +39,27 @@ export default function AdminProductsPage() {
     load();
   }
 
+  async function publishSocial(id: string) {
+    setPublishingId(id);
+    try {
+      await adminFetch(`/api/products/${id}/publish-social`, { method: "POST" });
+    } catch {
+      // L'échec est reflété par le statut "failed" renvoyé et rechargé ci-dessous ;
+      // pas besoin d'un second message d'erreur ici.
+    } finally {
+      setPublishingId(null);
+      load();
+    }
+  }
+
   async function validate(id: string) {
     await adminFetch(`/api/products/${id}`, { method: "PUT", body: JSON.stringify({ status: "available" }) });
-    load();
+    // Publication auto sur les réseaux sociaux si le réglage est actif (par défaut : actif).
+    if (settings?.socialAutoPublish !== false) {
+      await publishSocial(id);
+    } else {
+      load();
+    }
   }
 
   function newProduct() {
@@ -90,6 +112,7 @@ export default function AdminProductsPage() {
                 <th className="px-4 py-3 text-right">Prix</th>
                 <th className="px-4 py-3 text-center">Délai</th>
                 <th className="px-4 py-3 text-center">Statut</th>
+                <th className="px-4 py-3 text-center">Réseaux</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -131,12 +154,40 @@ export default function AdminProductsPage() {
                       {p.status === "pending" ? "à valider" : p.status}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-center">
+                    {publishingId === p._id ? (
+                      <Loader2 className="mx-auto h-3.5 w-3.5 animate-spin text-gray-400" />
+                    ) : p.socialPostStatus && p.socialPostStatus !== "none" ? (
+                      <span
+                        title={p.socialPostError || undefined}
+                        className={`rounded-full px-2 py-0.5 text-[10px] ${
+                          p.socialPostStatus === "published"
+                            ? "bg-green-100 text-green-700"
+                            : p.socialPostStatus === "failed"
+                            ? "bg-red-50 text-red-600"
+                            : "bg-gray-50 text-gray-500"
+                        }`}
+                      >
+                        {p.socialPostStatus === "published" ? "publié" : p.socialPostStatus === "failed" ? "échec" : "en attente"}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-gray-300">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     {p.status === "pending" && (
                       <button onClick={() => validate(p._id)} className="mr-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--primary)] hover:underline">
                         Valider
                       </button>
                     )}
+                    <button
+                      onClick={() => publishSocial(p._id)}
+                      disabled={publishingId === p._id}
+                      title="Publier sur Facebook / Instagram"
+                      className="mr-2 text-[var(--primary)] disabled:opacity-40"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </button>
                     <button onClick={() => setEditing({ ...p, category: p.category?._id || "" })} className="mr-2 text-[var(--primary)]">
                       <Edit className="h-4 w-4" />
                     </button>
