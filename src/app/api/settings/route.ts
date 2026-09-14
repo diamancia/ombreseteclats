@@ -4,6 +4,7 @@ import { connectDb } from "@/lib/mongoose";
 import { Settings } from "@/lib/models";
 import { verifyAdmin } from "@/lib/auth";
 import { siteConfig } from "@/site.config";
+import { DEFAULT_MODULE_FLAGS } from "@/lib/modules";
 
 export async function GET() {
   await connectDb();
@@ -18,6 +19,13 @@ export async function GET() {
       slots: siteConfig.defaults.slots,
       openWeekdays: siteConfig.defaults.openWeekdays,
       minDelay: siteConfig.defaults.minDelay,
+      socialAutoPublish: true,
+      navLinks: siteConfig.navbar.links,
+      socialLinks: [],
+      bannerEnabled: false,
+      bannerType: "photo",
+      bannerSize: "standard",
+      moduleFlags: DEFAULT_MODULE_FLAGS,
     });
   }
   const obj = s.toObject();

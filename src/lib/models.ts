@@ -1,5 +1,6 @@
 import mongoose, { Schema, InferSchemaType, Model } from "mongoose";
 import { siteConfig } from "@/site.config";
+import { DEFAULT_MODULE_FLAGS } from "@/lib/modules";
 
 // Category
 const CategorySchema = new Schema(
@@ -157,8 +158,25 @@ const SettingsSchema = new Schema(
     cookiesPolicy: String,
     // Réseaux sociaux — cahier des charges 4.5
     socialAutoPublish: { type: Boolean, default: true },
+    // Navigation & pied de page — cahier des charges 4.12
+    navLinks: {
+      type: [{ href: String, label: String, _id: false }],
+      default: () => siteConfig.navbar.links,
+    },
+    socialLinks: {
+      type: [{ platform: String, url: String, active: { type: Boolean, default: true }, _id: false }],
+      default: [],
+    },
+    // Bannière publicitaire page d'accueil — cahier des charges 4.10
+    bannerEnabled: { type: Boolean, default: false },
+    bannerType: { type: String, enum: ["photo", "video"], default: "photo" },
+    bannerSize: { type: String, enum: ["compacte", "standard", "pleine"], default: "standard" },
+    bannerUrl: String,
+    bannerLink: String,
+    // Panneau d'activation des modules — cahier des charges 4.11
+    moduleFlags: { type: Map, of: Boolean, default: () => DEFAULT_MODULE_FLAGS },
   },
-  { timestamps: true }
+  { timestamps: true, toObject: { flattenMaps: true }, toJSON: { flattenMaps: true } }
 );
 export type SettingsDoc = InferSchemaType<typeof SettingsSchema>;
 export const Settings: Model<SettingsDoc> =
