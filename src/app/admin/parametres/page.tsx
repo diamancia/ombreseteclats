@@ -230,9 +230,12 @@ export default function AdminSettingsPage() {
           <ClosedDatesPicker value={settings.closedDates || []} onChange={(v) => setSettings({ ...settings, closedDates: v })} />
         </Card>
 
-        <Card title="Page À propos">
+        <Card title="Section « À propos » (accueil)">
+          <p className="text-xs text-gray-400">
+            Affichée en bas de la page d&apos;accueil, sous l&apos;ancre #a-propos — il n&apos;y a plus de page À propos séparée.
+          </p>
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Texte affiché sur la page À propos</label>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Texte affiché dans la section À propos</label>
             <textarea
               rows={8}
               value={settings.about || ""}
