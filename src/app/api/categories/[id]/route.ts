@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/mongoose";
 import { Category } from "@/lib/models";
-import { verifyAdmin } from "@/lib/auth";
+import { verifyUser } from "@/lib/auth";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!verifyAdmin(req)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (!verifyUser(req, "categories")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   await connectDb();
   const { id } = await params;
   try {
@@ -18,7 +18,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!verifyAdmin(req)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (!verifyUser(req, "categories")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   await connectDb();
   const { id } = await params;
   const c = await Category.findByIdAndDelete(id);

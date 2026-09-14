@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/mongoose";
 import { Product } from "@/lib/models";
-import { verifyAdmin } from "@/lib/auth";
+import { verifyUser } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  if (!verifyAdmin(req)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (!verifyUser(req, "produits")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   await connectDb();
   try {
     const body = await req.json();

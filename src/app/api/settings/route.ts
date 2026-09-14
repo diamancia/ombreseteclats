@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDb } from "@/lib/mongoose";
 import { Settings } from "@/lib/models";
-import { verifyAdmin } from "@/lib/auth";
+import { verifyUser } from "@/lib/auth";
 import { siteConfig } from "@/site.config";
 import { DEFAULT_MODULE_FLAGS } from "@/lib/modules";
 
@@ -34,7 +34,7 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!verifyAdmin(req)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (!verifyUser(req, "parametres")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   await connectDb();
   try {
     const updates: any = await req.json();

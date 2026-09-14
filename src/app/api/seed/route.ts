@@ -4,7 +4,7 @@ import { connectDb } from "@/lib/mongoose";
 import { Settings, Category, Product, Order } from "@/lib/models";
 import { siteConfig } from "@/site.config";
 import { getLegalPreset } from "@/lib/legalPresets";
-import { verifyAdmin } from "@/lib/auth";
+import { verifyUser } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   await connectDb();
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   // Premier démarrage (aucun Settings en base) : pas d'admin encore créé, donc pas de
   // jeton possible — on autorise l'amorçage initial. Une fois le site initialisé, reseed
   // est destructeur (vide Produits/Catégories/Commandes) : on exige un admin authentifié.
-  if (existingSettings && !verifyAdmin(req)) {
+  if (existingSettings && !verifyUser(req)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 

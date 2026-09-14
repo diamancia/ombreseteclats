@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/mongoose";
 import { Product } from "@/lib/models";
-import { verifyAdmin } from "@/lib/auth";
+import { verifyUser } from "@/lib/auth";
 import { publishProductToSocial } from "@/lib/socialPublish";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!verifyAdmin(req)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (!verifyUser(req, "produits")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   await connectDb();
   const { id } = await params;
   try {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/mongoose";
 import { Category } from "@/lib/models";
-import { verifyAdmin } from "@/lib/auth";
+import { verifyUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   await connectDb();
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!verifyAdmin(req)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (!verifyUser(req, "categories")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   await connectDb();
   try {
     const body = await req.json();

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdmin } from "@/lib/auth";
+import { verifyUser } from "@/lib/auth";
 import { generateProductDescription } from "@/lib/ai";
 
 export async function POST(req: NextRequest) {
-  if (!verifyAdmin(req)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (!verifyUser(req, "produits")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   try {
     const { imageUrl, jewelryType, stoneDescription } = await req.json();
     if (!imageUrl) return NextResponse.json({ error: "imageUrl requis" }, { status: 400 });

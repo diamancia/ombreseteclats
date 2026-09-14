@@ -2,6 +2,42 @@ import mongoose, { Schema, InferSchemaType, Model } from "mongoose";
 import { siteConfig } from "@/site.config";
 import { DEFAULT_MODULE_FLAGS } from "@/lib/modules";
 
+// User — cahier des charges 4.9 (Utilisateurs & rôles). Comptes créés par le superadmin
+// uniquement (pas d'auto-inscription) : login/mot de passe attribués depuis /admin/utilisateurs.
+const UserSchema = new Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    passwordHash: { type: String, required: true },
+    role: {
+      type: String,
+      enum: ["admin", "community_manager", "vendeur", "custom"],
+      default: "custom",
+    },
+    modules: { type: [String], default: [] },
+    active: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+export type UserDoc = InferSchemaType<typeof UserSchema>;
+export const User: Model<UserDoc> = mongoose.models.User || mongoose.model("User", UserSchema);
+
+// Notification — messagerie interne du site (achats et autres événements clés), demandée en
+// complément du cahier des charges. Boîte partagée entre les utilisateurs admin.
+const NotificationSchema = new Schema(
+  {
+    type: { type: String, enum: ["order", "system"], default: "system" },
+    title: { type: String, required: true },
+    body: String,
+    link: String,
+    read: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+export type NotificationDoc = InferSchemaType<typeof NotificationSchema>;
+export const Notification: Model<NotificationDoc> =
+  mongoose.models.Notification || mongoose.model("Notification", NotificationSchema);
+
 // Category
 const CategorySchema = new Schema(
   {
