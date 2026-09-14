@@ -5,6 +5,7 @@ import { Settings } from "@/lib/models";
 import { verifyUser } from "@/lib/auth";
 import { siteConfig } from "@/site.config";
 import { DEFAULT_MODULE_FLAGS } from "@/lib/modules";
+import { DEFAULT_METAL_TYPES, DEFAULT_GOLD_COLORS } from "@/lib/metals";
 
 export async function GET() {
   await connectDb();
@@ -27,6 +28,8 @@ export async function GET() {
       bannerType: "photo",
       bannerSize: "standard",
       moduleFlags: DEFAULT_MODULE_FLAGS,
+      metalTypes: DEFAULT_METAL_TYPES,
+      goldColors: DEFAULT_GOLD_COLORS,
     });
   }
   const obj = s.toObject();

@@ -1,6 +1,7 @@
 import mongoose, { Schema, InferSchemaType, Model } from "mongoose";
 import { siteConfig } from "@/site.config";
 import { DEFAULT_MODULE_FLAGS } from "@/lib/modules";
+import { DEFAULT_METAL_TYPES, DEFAULT_GOLD_COLORS } from "@/lib/metals";
 
 // User — cahier des charges 4.9 (Utilisateurs & rôles). Comptes créés par le superadmin
 // uniquement (pas d'auto-inscription) : login/mot de passe attribués depuis /admin/utilisateurs.
@@ -112,10 +113,15 @@ const ProductSchema = new Schema(
         "ceinture_traditionnelle",
         "broche",
         "perles",
+        "cordon",
       ],
     },
     dimensionValue: String,
     stone: StoneSchema,
+    // Métal — remplace l'ancienne "finition" (poli/brossé/noirci/plaqué or) pour cet usage :
+    // valeurs libres, alimentées par Settings.metalTypes/goldColors (backend-configurable).
+    metal: String,
+    goldColor: String,
     // Description par IA — cahier des charges 4.4
     aiGenerated: {
       description: { type: Boolean, default: false },
@@ -226,6 +232,15 @@ const SettingsSchema = new Schema(
     bannerLink: String,
     // Panneau d'activation des modules — cahier des charges 4.11
     moduleFlags: { type: Map, of: Boolean, default: () => DEFAULT_MODULE_FLAGS },
+    // Métaux vendus (argent/or/perles) et couleurs d'or — listes éditables en backend.
+    metalTypes: {
+      type: [{ key: String, label: String, _id: false }],
+      default: () => DEFAULT_METAL_TYPES,
+    },
+    goldColors: {
+      type: [{ key: String, label: String, hex: String, _id: false }],
+      default: () => DEFAULT_GOLD_COLORS,
+    },
   },
   { timestamps: true, toObject: { flattenMaps: true }, toJSON: { flattenMaps: true } }
 );
