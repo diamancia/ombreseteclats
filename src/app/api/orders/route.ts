@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/mongoose";
-import { Order, Notification } from "@/lib/models";
+import { Order, Notification, Settings } from "@/lib/models";
 import { verifyUser } from "@/lib/auth";
+import { sendOwnerOrderEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   await connectDb();
@@ -19,6 +20,12 @@ export async function POST(req: NextRequest) {
       body: `${total} € · ${items.length} article(s)`,
       link: "/admin/commandes",
     }).catch(() => {});
+    // Copie email perso — Phase 6, en complément de la messagerie interne (best-effort).
+    Settings.findOne()
+      .select("email")
+      .lean()
+      .then((s: any) => s?.email && sendOwnerOrderEmail(s.email, { client, total, items }))
+      .catch(() => {});
     return NextResponse.json(o, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? "Erreur" }, { status: 400 });
