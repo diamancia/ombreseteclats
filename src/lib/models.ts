@@ -24,6 +24,19 @@ const SizeSchema = new Schema(
   { name: String, surcharge: { type: Number, default: 0 } },
   { _id: true }
 );
+const StoneSchema = new Schema(
+  {
+    nature: { type: String, enum: ["naturelle", "synthetique", "diamant"] },
+    shape: {
+      type: String,
+      enum: ["rond", "ovale", "princesse", "coeur", "emeraude", "poire", "marquise", "coussin"],
+    },
+    carats: Number,
+    centralDescription: String,
+    secondaryDescription: String,
+  },
+  { _id: false }
+);
 const ProductSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -32,13 +45,29 @@ const ProductSchema = new Schema(
     basePrice: { type: Number, required: true, min: 0 },
     delay: { type: Number, default: 2 },
     isNew: { type: Boolean, default: false },
-    status: { type: String, enum: ["available", "unavailable", "soon"], default: "available" },
+    status: {
+      type: String,
+      enum: ["available", "unavailable", "soon", "pending"],
+      default: "available",
+    },
     imageUrl: String,
     images: { type: [String], default: [] },
     allergens: String,
     category: { type: Schema.Types.ObjectId, ref: "Category" },
     flavors: [FlavorSchema],
     sizes: [SizeSchema],
+    // Attributs avancés (bijouterie) — cahier des charges 4.2
+    jewelryType: {
+      type: String,
+      enum: ["bague", "bracelet", "collier", "gourmette_cheville", "boucle_oreille"],
+    },
+    dimensionValue: String,
+    stone: StoneSchema,
+    // Description par IA — cahier des charges 4.4
+    aiGenerated: {
+      description: { type: Boolean, default: false },
+      hashtags: { type: [String], default: [] },
+    },
   },
   { timestamps: true, suppressReservedKeysWarning: true }
 );

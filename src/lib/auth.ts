@@ -1,10 +1,10 @@
 import jwt from "jsonwebtoken";
 import { NextRequest } from "next/server";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
+if (!process.env.JWT_SECRET) {
   throw new Error("Missing JWT_SECRET env variable");
 }
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
 export function signAdminToken() {
   return jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "24h" });
