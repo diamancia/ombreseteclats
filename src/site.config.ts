@@ -134,6 +134,7 @@ export const siteConfig: SiteConfig = {
   navbar: {
     links: [
       { href: "/", label: "Accueil" },
+      { href: "/catalogue", label: "Boutique" },
       { href: "/catalogue?genre=homme", label: "Collections Homme" },
       { href: "/catalogue?genre=femme", label: "Collections Femme" },
       { href: "/sur-mesure", label: "Sur-mesure" },

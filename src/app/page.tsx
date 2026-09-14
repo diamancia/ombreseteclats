@@ -28,9 +28,6 @@ export default async function HomePage() {
   const { products, categories, settings } = await loadData();
   const newItems = products.filter((p: any) => p.isNew && p.status !== "unavailable").slice(0, 5);
   const displayedNew = newItems.length > 0 ? newItems : products.slice(0, 5);
-  // Preview products: up to 8 non-new available items to give shoppers a taste of the catalogue
-  const newIds = new Set(displayedNew.map((p: any) => p._id));
-  const previewProducts = products.filter((p: any) => p.status !== "unavailable" && !newIds.has(p._id)).slice(0, 8);
   const brandName = settings.brandName || siteConfig.brand.name;
   const heroImage = settings.heroImageUrl || siteConfig.hero.defaultImageUrl;
   const heroTitle = settings.heroTitle || siteConfig.hero.defaultTitle;
@@ -148,28 +145,6 @@ export default async function HomePage() {
                 {displayedNew.map((p: any) => (
                   <ProductCard key={p._id} product={p} />
                 ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Aperçu du catalogue */}
-        {previewProducts.length > 0 && (
-          <section className="py-20">
-            <div className="mx-auto max-w-7xl px-6">
-              <SectionHeader title="NOS PIÈCES" />
-              <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                {previewProducts.map((p: any) => (
-                  <ProductCard key={p._id} product={p} />
-                ))}
-              </div>
-              <div className="mt-10 flex justify-center">
-                <Link
-                  href="/catalogue"
-                  className="rounded-sm border border-[var(--primary)] px-8 py-3 text-xs font-semibold uppercase tracking-widest text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
-                >
-                  Voir toutes les collections →
-                </Link>
               </div>
             </div>
           </section>
