@@ -51,7 +51,11 @@ export default function FilterPanel({
           </Link>
         )}
       </div>
-      {open && <div className="mt-6 space-y-5 rounded-2xl bg-[var(--muted)] p-6">{children}</div>}
+      {open && (
+        <div className="mt-6 space-y-5 rounded-2xl border border-[var(--primary)]/25 bg-[var(--muted)] p-6 shadow-sm ring-1 ring-black/5">
+          {children}
+        </div>
+      )}
     </div>
   );
 }

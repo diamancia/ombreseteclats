@@ -119,6 +119,12 @@ export default function AdminOrdersPage() {
                         <strong>Note :</strong> {o.note}
                       </p>
                     )}
+                    {o.attachmentUrl && (
+                      <a href={o.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-3 block">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={o.attachmentUrl} alt="Photo jointe par le client" className="h-24 w-24 rounded-lg object-cover ring-1 ring-gray-200" />
+                      </a>
+                    )}
                   </div>
                 )}
               </div>

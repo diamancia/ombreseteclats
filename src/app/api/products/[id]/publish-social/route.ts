@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDb } from "@/lib/mongoose";
-import { Product } from "@/lib/models";
+import { getProductById, updateProduct } from "@/lib/db";
 import { verifyUser } from "@/lib/auth";
 import { publishProductToSocial } from "@/lib/socialPublish";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!verifyUser(req, "produits")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  await connectDb();
   const { id } = await params;
   try {
-    const product = await Product.findById(id);
+    const product = await getProductById(id);
     if (!product) return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     if (!product.imageUrl) {
       return NextResponse.json({ error: "Ce produit n'a pas de photo principale" }, { status: 400 });
@@ -23,17 +21,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
 
     const published = !!(result.facebookPostId || result.instagramPostId);
-    product.socialPostStatus = published ? "published" : "failed";
-    product.socialPostedAt = published ? new Date() : product.socialPostedAt;
-    product.socialPostIds = {
-      facebook: result.facebookPostId || product.socialPostIds?.facebook,
-      instagram: result.instagramPostId || product.socialPostIds?.instagram,
-    };
-    product.socialPostError = result.errors.length ? result.errors.join(" · ") : undefined;
-    await product.save();
+    const socialPostStatus = published ? "published" : "failed";
+    const updated = await updateProduct(id, {
+      socialPostStatus,
+      socialPostedAt: published ? new Date().toISOString() : product.socialPostedAt,
+      socialPostIds: {
+        facebook: result.facebookPostId || product.socialPostIds?.facebook,
+        instagram: result.instagramPostId || product.socialPostIds?.instagram,
+      },
+      socialPostError: result.errors.length ? result.errors.join(" · ") : undefined,
+    });
 
     return NextResponse.json({
-      status: product.socialPostStatus,
+      status: updated.socialPostStatus,
       facebookPostId: result.facebookPostId,
       instagramPostId: result.instagramPostId,
       errors: result.errors,

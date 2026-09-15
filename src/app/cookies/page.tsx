@@ -2,17 +2,14 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
 import ContactButton from "@/components/ContactButton";
-import { connectDb } from "@/lib/mongoose";
-import { Settings } from "@/lib/models";
+import { getSettings } from "@/lib/db";
 import { siteConfig } from "@/site.config";
 import { getLegalPreset } from "@/lib/legalPresets";
 
 export const dynamic = "force-dynamic";
 
 export default async function CookiesPage() {
-  await connectDb();
-  const s = await Settings.findOne().lean();
-  const settings: any = JSON.parse(JSON.stringify(s || {}));
+  const settings: any = (await getSettings()) || {};
   const cookiesPolicy = settings.cookiesPolicy?.trim() || getLegalPreset().cookiesPolicy;
   const brand = settings.brandName || siteConfig.brand.name;
 

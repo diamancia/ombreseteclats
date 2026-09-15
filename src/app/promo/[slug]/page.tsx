@@ -6,22 +6,17 @@ import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
 import CountdownTimer from "@/components/CountdownTimer";
 import PromoGallery from "@/components/PromoGallery";
-import { connectDb } from "@/lib/mongoose";
-import { LandingPage, Settings } from "@/lib/models";
+import { getLandingPageBySlug, getSettings } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function PromoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  await connectDb();
-  const [lpDoc, settingsDoc] = await Promise.all([
-    LandingPage.findOne({ slug }).lean(),
-    Settings.findOne().lean(),
-  ]);
+  const [lpDoc, settingsDoc] = await Promise.all([getLandingPageBySlug(slug), getSettings()]);
   if (!lpDoc) notFound();
 
-  const page: any = JSON.parse(JSON.stringify(lpDoc));
-  const settings: any = JSON.parse(JSON.stringify(settingsDoc || {}));
+  const page: any = lpDoc;
+  const settings: any = settingsDoc || {};
 
   const now = Date.now();
   const started = page.active && (!page.startAt || new Date(page.startAt).getTime() <= now);

@@ -9,11 +9,11 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Valeurs bidons pour que le build passe (les vraies valeurs viennent de l'environnement
-# au runtime) — aucune n'est utilisée au build, uniquement pour satisfaire les checks
-# "variable manquante" des libs important au module-load (lib/auth.ts, lib/mongodb.ts).
+# Valeur bidon pour que le build passe (la vraie valeur vient de l'environnement au
+# runtime) — non utilisée au build, uniquement pour satisfaire le check "variable
+# manquante" de lib/auth.ts au module-load. src/lib/db/client.ts (Supabase) ne lève son
+# erreur qu'au premier appel réel, pas à l'import — pas besoin de placeholder pour lui.
 ENV JWT_SECRET=build-placeholder
-ENV MONGODB_URI=mongodb://placeholder:27017/placeholder
 RUN npm run build
 
 FROM node:20-alpine AS runner

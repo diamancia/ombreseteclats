@@ -4,20 +4,43 @@ import { useCart } from "@/context/CartProvider";
 import { siteConfig } from "@/site.config";
 
 const V1 = siteConfig.product.variant1;
-const V2 = siteConfig.product.variant2;
 
-export default function ProductOrderForm({ product }: { product: any }) {
+const DEFAULT_PRICING = { refCm: 40, pricePerCm: 5 };
+
+export default function ProductOrderForm({
+  product,
+  pricingRule,
+}: {
+  product: any;
+  pricingRule?: { refCm: number; pricePerCm: number };
+}) {
   const { addToCart } = useCart();
   const [flavor, setFlavor] = useState(product.flavors?.[0] || null);
-  const [size, setSize] = useState(product.sizes?.[0] || null);
+  const cl = product.customLength;
+  const presets: number[] = cl?.presets?.length ? cl.presets : [39, 42];
+  const [lengthMode, setLengthMode] = useState<"preset" | "custom">("preset");
+  const [lengthCm, setLengthCm] = useState<number>(presets[0]);
+  const [customCm, setCustomCm] = useState<string>("");
   const [qty, setQty] = useState(1);
+  const rule = pricingRule || DEFAULT_PRICING;
+
+  const effectiveLengthCm =
+    cl?.enabled && lengthMode === "custom" && customCm !== "" ? Number(customCm) : lengthCm;
 
   const price = useMemo(() => {
     const base = Number(product.basePrice) || 0;
-    const fs = Number(flavor?.surcharge) || 0;
-    const ss = Number(size?.surcharge) || 0;
-    return base + fs + ss;
-  }, [product.basePrice, flavor, size]);
+    const fs = V1.enabled ? Number(flavor?.surcharge) || 0 : 0;
+    let lengthSurcharge = 0;
+    if (cl?.enabled && effectiveLengthCm) {
+      lengthSurcharge = (effectiveLengthCm - rule.refCm) * rule.pricePerCm;
+    }
+    return Math.max(base, base + fs + lengthSurcharge);
+  }, [product.basePrice, flavor, cl?.enabled, effectiveLengthCm, rule.refCm, rule.pricePerCm]);
+
+  const lengthInvalid =
+    !!cl?.enabled &&
+    lengthMode === "custom" &&
+    (customCm === "" || Number(customCm) < (cl.minCm || 30) || Number(customCm) > (cl.maxCm || 70));
 
   // Use flavor image if selected, else main product image
   const displayImage = flavor?.imageUrl || product.imageUrl;
@@ -32,7 +55,7 @@ export default function ProductOrderForm({ product }: { product: any }) {
 
   return (
     <div className="mt-8 space-y-5">
-      {product.flavors?.length > 0 && (
+      {V1.enabled && product.flavors?.length > 0 && (
         <div>
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">
             {V1.labelSingular.charAt(0).toUpperCase() + V1.labelSingular.slice(1)} {flavor && <span className="text-[var(--primary)]">· {flavor.name}</span>}
@@ -72,28 +95,56 @@ export default function ProductOrderForm({ product }: { product: any }) {
         </div>
       )}
 
-      {product.sizes?.length > 0 && (
+      {cl?.enabled && (
         <div>
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">
-            {V2.label} {size && <span className="text-[var(--primary)]">· {size.name}</span>}
+            Longueur de la chaîne{" "}
+            <span className="text-[var(--primary)]">· {effectiveLengthCm} cm</span>
           </label>
           <div className="flex flex-wrap gap-2">
-            {product.sizes.map((s: any) => (
+            {presets.map((cm) => (
               <button
-                key={s._id}
+                key={cm}
                 type="button"
-                onClick={() => setSize(s)}
+                onClick={() => {
+                  setLengthMode("preset");
+                  setLengthCm(cm);
+                }}
                 className={`rounded-full px-4 py-2 text-xs transition-colors ${
-                  size?._id === s._id
+                  lengthMode === "preset" && lengthCm === cm
                     ? "bg-[var(--primary)] text-[var(--background)]"
                     : "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
                 }`}
               >
-                {s.name}
-                {s.surcharge > 0 && ` (+${s.surcharge}€)`}
+                {cm} cm
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setLengthMode("custom")}
+              className={`rounded-full px-4 py-2 text-xs transition-colors ${
+                lengthMode === "custom"
+                  ? "bg-[var(--primary)] text-[var(--background)]"
+                  : "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
+              }`}
+            >
+              Sur mesure
+            </button>
           </div>
+          {lengthMode === "custom" && (
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                type="number"
+                min={cl.minCm || 30}
+                max={cl.maxCm || 70}
+                value={customCm}
+                onChange={(e) => setCustomCm(e.target.value)}
+                placeholder={`${cl.minCm || 30}–${cl.maxCm || 70}`}
+                className="w-24 rounded-lg border border-[var(--accent)] bg-[var(--background)] px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
+              />
+              <span className="text-xs text-[var(--foreground)]/60">cm (entre {cl.minCm || 30} et {cl.maxCm || 70})</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -120,6 +171,7 @@ export default function ProductOrderForm({ product }: { product: any }) {
         <div className="text-2xl font-semibold text-[var(--primary)]">{(price * qty).toFixed(2)}€</div>
         <button
           type="button"
+          disabled={lengthInvalid}
           onClick={() =>
             addToCart({
               productId: product._id,
@@ -127,11 +179,11 @@ export default function ProductOrderForm({ product }: { product: any }) {
               price,
               imageUrl: displayImage,
               flavor: flavor?.name,
-              size: size?.name,
+              size: cl?.enabled ? `${effectiveLengthCm} cm` : undefined,
               quantity: qty,
             })
           }
-          className="rounded-sm bg-[var(--primary)] px-8 py-3 text-xs font-semibold uppercase tracking-widest text-[var(--background)] hover:bg-[var(--primary-dark)]"
+          className="rounded-sm bg-[var(--primary)] px-8 py-3 text-xs font-semibold uppercase tracking-widest text-[var(--background)] hover:bg-[var(--primary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           Ajouter au panier
         </button>

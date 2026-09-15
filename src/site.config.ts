@@ -137,8 +137,9 @@ export const siteConfig: SiteConfig = {
       { href: "/catalogue", label: "Boutique" },
       { href: "/catalogue?genre=homme", label: "Collections Homme" },
       { href: "/catalogue?genre=femme", label: "Collections Femme" },
+      { href: "/catalogue?genre=enfant", label: "Collections Enfant" },
       { href: "/sur-mesure", label: "Sur-mesure" },
-      { href: "/#contact", label: "Contact" },
+      { href: "/contact", label: "Contact" },
     ],
   },
 
@@ -149,7 +150,8 @@ export const siteConfig: SiteConfig = {
       labelSingular: "finition",
       placeholder: "Nom de la finition (Poli, Brossé, Noirci…)",
       hasImage: true,
-      enabled: true,
+      // Non pertinent pour la bijouterie — désactivé (remplacé par la longueur personnalisable).
+      enabled: false,
     },
     variant2: {
       key: "sizes",
@@ -157,7 +159,8 @@ export const siteConfig: SiteConfig = {
       labelSingular: "taille",
       placeholder: "Taille (ex: 58, 60, 19cm…)",
       hasImage: false,
-      enabled: true,
+      // Remplacé par le sélecteur de longueur de chaîne (product.customLength).
+      enabled: false,
     },
     hasAllergens: true,
     allergensLabel: "Matière & entretien",
@@ -172,12 +175,16 @@ export const siteConfig: SiteConfig = {
     whatsappButton: true,
   },
 
+  // Types de pièces proposées en création sur-mesure (dropdown du formulaire /sur-mesure).
   customOrderEvents: [
-    "Gravure initiales",
-    "Chevalière aux armoiries",
-    "Pièce unique sur-mesure",
-    "Alliance homme",
-    "Cadeau personnalisé",
+    "Bague",
+    "Bracelet",
+    "Collier",
+    "Pendentif",
+    "Boucles d'oreilles",
+    "Broche",
+    "Mdemma",
+    "Gourmette",
     "Autre",
   ],
 

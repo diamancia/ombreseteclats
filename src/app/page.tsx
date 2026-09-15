@@ -6,25 +6,24 @@ import Cart from "@/components/Cart";
 import AddToCartButton from "@/components/AddToCartButton";
 import ProductCard from "@/components/ProductCard";
 import ContactButton from "@/components/ContactButton";
+import GoogleReviews from "@/components/GoogleReviews";
 import EditModeProvider from "@/components/admin/EditMode";
 import InlineEditableText from "@/components/admin/InlineEditableText";
-import { connectDb } from "@/lib/mongoose";
-import { Product, Category, Settings } from "@/lib/models";
+import { listProducts, listCategories, getSettings } from "@/lib/db";
 import { siteConfig } from "@/site.config";
 import { getLegalPreset } from "@/lib/legalPresets";
 
 export const dynamic = "force-dynamic";
 
 async function loadData() {
-  await connectDb();
   const [products, categories, settingsDoc] = await Promise.all([
-    Product.find().populate("category").sort({ createdAt: -1 }).lean(),
+    listProducts(),
     // Catégories principales uniquement — les sous-catégories se découvrent depuis le catalogue.
-    Category.find({ active: true, parent: null }).sort("name").lean(),
-    Settings.findOne().lean(),
+    listCategories({ activeOnly: true, topLevelOnly: true }),
+    getSettings(),
   ]);
   const settings: any = settingsDoc || {};
-  return { products: JSON.parse(JSON.stringify(products)), categories: JSON.parse(JSON.stringify(categories)), settings: JSON.parse(JSON.stringify(settings)) };
+  return { products, categories, settings };
 }
 
 export default async function HomePage() {
@@ -229,6 +228,9 @@ export default async function HomePage() {
           </div>
         </section>
       </main>
+
+      <GoogleReviews />
+
       <Footer brandName={brandName} navLinks={settings.navLinks} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
 
       {siteConfig.features.whatsappButton && <ContactButton phone={settings.phone} />}

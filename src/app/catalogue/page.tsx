@@ -5,55 +5,50 @@ import Cart from "@/components/Cart";
 import AddToCartButton from "@/components/AddToCartButton";
 import ContactButton from "@/components/ContactButton";
 import FilterPanel from "@/components/FilterPanel";
-import { connectDb } from "@/lib/mongoose";
-import { Product, Category, Settings } from "@/lib/models";
+import MetalSlider from "@/components/MetalSlider";
+import PriceRangeSlider from "@/components/PriceRangeSlider";
+import { listProducts, listCategories, getSettings } from "@/lib/db";
 import { DEFAULT_METAL_TYPES } from "@/lib/metals";
 import { siteConfig } from "@/site.config";
 
 export const dynamic = "force-dynamic";
 
-// Filtre prix — volontairement léger : quelques paliers plutôt qu'un curseur, pour rester
-// en liens simples côté serveur (pas de JS client supplémentaire).
-const PRICE_BRACKETS: { key: string; label: string; min?: number; max?: number }[] = [
-  { key: "-100", label: "Moins de 100€", max: 100 },
-  { key: "100-200", label: "100€ – 200€", min: 100, max: 200 },
-  { key: "200-400", label: "200€ – 400€", min: 200, max: 400 },
-  { key: "400+", label: "400€ et plus", min: 400 },
-];
-
-function catalogueHref(params: { cat?: string; genre?: string; metal?: string; prix?: string }) {
+function catalogueHref(params: { cat?: string; genre?: string; metal?: string; min?: number; max?: number }) {
   const qs = new URLSearchParams();
   if (params.cat) qs.set("cat", params.cat);
   if (params.genre) qs.set("genre", params.genre);
   if (params.metal) qs.set("metal", params.metal);
-  if (params.prix) qs.set("prix", params.prix);
+  if (params.min !== undefined) qs.set("min", String(params.min));
+  if (params.max !== undefined) qs.set("max", String(params.max));
   const s = qs.toString();
   return s ? `/catalogue?${s}` : "/catalogue";
 }
 
 async function loadData() {
-  await connectDb();
   const [products, categories, settings] = await Promise.all([
-    Product.find().populate("category").sort({ createdAt: -1 }).lean(),
-    Category.find({ active: true }).sort("name").lean(),
-    Settings.findOne().lean(),
+    listProducts(),
+    listCategories({ activeOnly: true }),
+    getSettings(),
   ]);
-  return {
-    products: JSON.parse(JSON.stringify(products)),
-    categories: JSON.parse(JSON.stringify(categories)),
-    settings: JSON.parse(JSON.stringify(settings || {})),
-  };
+  return { products, categories, settings: (settings || {}) as any };
 }
 
 export default async function CataloguePage({
   searchParams,
 }: {
-  searchParams: Promise<{ cat?: string; genre?: string; metal?: string; prix?: string }>;
+  searchParams: Promise<{ cat?: string; genre?: string; metal?: string; min?: string; max?: string }>;
 }) {
   const sp = await searchParams;
   const { products, categories, settings } = await loadData();
   const metalTypes = settings.metalTypes?.length ? settings.metalTypes : DEFAULT_METAL_TYPES;
-  const priceBracket = sp.prix ? PRICE_BRACKETS.find((b) => b.key === sp.prix) : undefined;
+
+  // Bornes du curseur de prix — dérivées des produits réels (arrondies pour un curseur lisible).
+  const prices = products.map((p: any) => Number(p.basePrice) || 0);
+  const priceFloor = prices.length ? Math.floor(Math.min(...prices) / 10) * 10 : 0;
+  const priceCeil = prices.length ? Math.ceil(Math.max(...prices) / 10) * 10 : 100;
+  const priceMin = sp.min !== undefined ? Number(sp.min) : priceFloor;
+  const priceMax = sp.max !== undefined ? Number(sp.max) : priceCeil;
+  const priceActive = sp.min !== undefined || sp.max !== undefined;
 
   const topLevelCats = categories.filter((c: any) => !c.parent);
   const selectedCat = sp.cat ? categories.find((c: any) => c._id === sp.cat) : undefined;
@@ -71,27 +66,32 @@ export default async function CataloguePage({
 
   const chips: { label: string; removeHref: string }[] = [];
   if (sp.genre) {
+    const genreLabels: Record<string, string> = {
+      femme: "Collections Femme",
+      enfant: "Collections Enfant",
+      homme: "Collections Homme",
+    };
     chips.push({
-      label: sp.genre === "femme" ? "Collections Femme" : "Collections Homme",
-      removeHref: catalogueHref({ cat: sp.cat, metal: sp.metal, prix: sp.prix }),
+      label: genreLabels[sp.genre] || "Collections Homme",
+      removeHref: catalogueHref({ cat: sp.cat, metal: sp.metal }),
     });
   }
   if (selectedCat) {
     chips.push({
       label: (selectedCat as any).name,
-      removeHref: catalogueHref({ genre: sp.genre, metal: sp.metal, prix: sp.prix }),
+      removeHref: catalogueHref({ genre: sp.genre, metal: sp.metal }),
     });
   }
   if (sp.metal) {
     const m = metalTypes.find((mt: any) => mt.key === sp.metal);
     chips.push({
       label: m?.label || sp.metal,
-      removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre, prix: sp.prix }),
+      removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre }),
     });
   }
-  if (priceBracket) {
+  if (priceActive) {
     chips.push({
-      label: priceBracket.label,
+      label: `${priceMin}€ – ${priceMax}€`,
       removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal }),
     });
   }
@@ -101,10 +101,9 @@ export default async function CataloguePage({
     .filter((p: any) => !sp.genre || (p.gender || "homme") === sp.genre)
     .filter((p: any) => !sp.metal || p.metal === sp.metal)
     .filter((p: any) => {
-      if (!priceBracket) return true;
-      if (priceBracket.min !== undefined && p.basePrice < priceBracket.min) return false;
-      if (priceBracket.max !== undefined && p.basePrice >= priceBracket.max) return false;
-      return true;
+      if (!priceActive) return true;
+      const price = Number(p.basePrice) || 0;
+      return price >= priceMin && price <= priceMax;
     });
 
   return (
@@ -126,19 +125,20 @@ export default async function CataloguePage({
 
           <FilterPanel activeChips={chips} clearHref="/catalogue">
             <div>
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/40">Genre</p>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/60">Genre</p>
               <div className="flex flex-wrap gap-2">
                 {[
                   { key: undefined, label: "Tout" },
                   { key: "homme", label: "Collections Homme" },
                   { key: "femme", label: "Collections Femme" },
+                  { key: "enfant", label: "Collections Enfant" },
                 ].map((g) => {
                   const active = (sp.genre || undefined) === g.key;
                   const isFemme = g.key === "femme";
                   return (
                     <Link
                       key={g.label}
-                      href={catalogueHref({ cat: sp.cat, genre: g.key, metal: sp.metal, prix: sp.prix })}
+                      href={catalogueHref({ cat: sp.cat, genre: g.key, metal: sp.metal, min: sp.min ? Number(sp.min) : undefined, max: sp.max ? Number(sp.max) : undefined })}
                       className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
                         active
                           ? isFemme
@@ -157,10 +157,10 @@ export default async function CataloguePage({
             </div>
 
             <div>
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/40">Catégorie</p>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/60">Catégorie</p>
               <div className="flex flex-wrap gap-2">
                 <Link
-                  href={catalogueHref({ genre: sp.genre, metal: sp.metal, prix: sp.prix })}
+                  href={catalogueHref({ genre: sp.genre, metal: sp.metal, min: sp.min ? Number(sp.min) : undefined, max: sp.max ? Number(sp.max) : undefined })}
                   className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
                     !sp.cat
                       ? "bg-[var(--primary)] text-[var(--background)]"
@@ -172,7 +172,7 @@ export default async function CataloguePage({
                 {topLevelCats.map((c: any) => (
                   <Link
                     key={c._id}
-                    href={catalogueHref({ cat: c._id, genre: sp.genre, metal: sp.metal, prix: sp.prix })}
+                    href={catalogueHref({ cat: c._id, genre: sp.genre, metal: sp.metal, min: sp.min ? Number(sp.min) : undefined, max: sp.max ? Number(sp.max) : undefined })}
                     className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
                       sp.cat === c._id || c._id === activeParentId
                         ? "bg-[var(--primary)] text-[var(--background)]"
@@ -188,11 +188,11 @@ export default async function CataloguePage({
                   {subCats.map((c: any) => (
                     <Link
                       key={c._id}
-                      href={catalogueHref({ cat: c._id, genre: sp.genre, metal: sp.metal, prix: sp.prix })}
+                      href={catalogueHref({ cat: c._id, genre: sp.genre, metal: sp.metal, min: sp.min ? Number(sp.min) : undefined, max: sp.max ? Number(sp.max) : undefined })}
                       className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
                         sp.cat === c._id
                           ? "bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]"
-                          : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
+                          : "text-[var(--foreground)]/70 ring-1 ring-[var(--primary)]/30 hover:text-[var(--primary)]"
                       }`}
                     >
                       {c.name}
@@ -202,61 +202,25 @@ export default async function CataloguePage({
               )}
             </div>
 
-            <div>
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/40">Métal</p>
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href={catalogueHref({ cat: sp.cat, genre: sp.genre, prix: sp.prix })}
-                  className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
-                    !sp.metal
-                      ? "bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]"
-                      : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
-                  }`}
-                >
-                  Tous les métaux
-                </Link>
-                {metalTypes.map((m: any) => (
-                  <Link
-                    key={m.key}
-                    href={catalogueHref({ cat: sp.cat, genre: sp.genre, metal: m.key, prix: sp.prix })}
-                    className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
-                      sp.metal === m.key
-                        ? "bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]"
-                        : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
-                    }`}
-                  >
-                    {m.label}
-                  </Link>
-                ))}
+            <div className="flex flex-wrap items-start gap-x-10 gap-y-5">
+              <div>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/60">Métal</p>
+                <MetalSlider
+                  metalTypes={metalTypes}
+                  value={sp.metal}
+                  hrefFor={(metalKey) => catalogueHref({ cat: sp.cat, genre: sp.genre, metal: metalKey, min: sp.min ? Number(sp.min) : undefined, max: sp.max ? Number(sp.max) : undefined })}
+                />
               </div>
-            </div>
 
-            <div>
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/40">Budget</p>
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href={catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal })}
-                  className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
-                    !sp.prix
-                      ? "bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]"
-                      : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
-                  }`}
-                >
-                  Tous les prix
-                </Link>
-                {PRICE_BRACKETS.map((b) => (
-                  <Link
-                    key={b.key}
-                    href={catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal, prix: b.key })}
-                    className={`rounded-full px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors ${
-                      sp.prix === b.key
-                        ? "bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]"
-                        : "text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] hover:text-[var(--primary)]"
-                    }`}
-                  >
-                    {b.label}
-                  </Link>
-                ))}
+              <div>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/60">Budget</p>
+                <PriceRangeSlider
+                  min={priceFloor}
+                  max={priceCeil}
+                  lo={priceMin}
+                  hi={priceMax}
+                  hrefFor={(lo, hi) => catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal, min: lo, max: hi })}
+                />
               </div>
             </div>
           </FilterPanel>

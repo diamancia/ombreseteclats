@@ -6,9 +6,10 @@
 export type MetalType = { key: string; label: string };
 export type GoldColor = { key: string; label: string; hex: string };
 
+// Ordre pensé pour le slider de filtre boutique : dégradé or jaune → gris/rose → argenté → perle.
 export const DEFAULT_METAL_TYPES: MetalType[] = [
-  { key: "argent", label: "Argent" },
   { key: "or", label: "Or" },
+  { key: "argent", label: "Argent" },
   { key: "perles", label: "Perles" },
 ];
 

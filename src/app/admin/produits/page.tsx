@@ -8,7 +8,6 @@ import MultiPhotoImport from "@/components/admin/MultiPhotoImport";
 import { DEFAULT_METAL_TYPES, DEFAULT_GOLD_COLORS } from "@/lib/metals";
 
 const V1 = siteConfig.product.variant1;
-const V2 = siteConfig.product.variant2;
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -80,6 +79,7 @@ export default function AdminProductsPage() {
       allergens: "",
       flavors: [],
       sizes: [],
+      customLength: { enabled: false, presets: [39, 42], minCm: 30, maxCm: 70 },
     };
   }
 
@@ -250,7 +250,13 @@ function ProductModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [form, setForm] = useState({ ...initial, flavors: initial.flavors || [], sizes: initial.sizes || [], images: initial.images || [] });
+  const [form, setForm] = useState({
+    ...initial,
+    flavors: initial.flavors || [],
+    sizes: initial.sizes || [],
+    images: initial.images || [],
+    customLength: initial.customLength || { enabled: false, presets: [39, 42], minCm: 30, maxCm: 70 },
+  });
   const [saving, setSaving] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -320,16 +326,6 @@ function ProductModal({
     } catch (e: any) {
       setError(e.message);
     }
-  }
-
-  function addSize() {
-    setForm({ ...form, sizes: [...form.sizes, { _id: Math.random().toString(36).slice(2), name: "", surcharge: 0 }] });
-  }
-  function updateSize(idx: number, patch: any) {
-    setForm({ ...form, sizes: form.sizes.map((s: any, i: number) => (i === idx ? { ...s, ...patch } : s)) });
-  }
-  function removeSize(idx: number) {
-    setForm({ ...form, sizes: form.sizes.filter((_: any, i: number) => i !== idx) });
   }
 
   return (
@@ -402,6 +398,7 @@ function ProductModal({
               >
                 <option value="homme">Homme</option>
                 <option value="femme">Femme</option>
+                <option value="enfant">Enfant</option>
                 <option value="mixte">Mixte</option>
               </select>
             </div>
@@ -521,40 +518,74 @@ function ProductModal({
           </div>
           )}
 
-          {/* Variant 2 (sizes) */}
-          {V2.enabled && (
+          {/* Longueur de chaîne personnalisable */}
           <div className="rounded-xl border border-gray-200 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-wider">{V2.label}</h3>
-              <button type="button" onClick={addSize} className="flex items-center gap-1 text-xs text-[var(--primary)] hover:underline">
-                <Plus className="h-3 w-3" /> Ajouter {V2.labelSingular}
-              </button>
-            </div>
-            {form.sizes.length === 0 && <p className="text-xs text-gray-400">Aucun(e) {V2.labelSingular} — prix de base unique.</p>}
-            <div className="space-y-3">
-              {form.sizes.map((s: any, i: number) => (
-                <div key={s._id || i} className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+            <label className="mb-3 flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!form.customLength?.enabled}
+                onChange={(e) =>
+                  setForm({ ...form, customLength: { ...form.customLength, enabled: e.target.checked } })
+                }
+              />
+              <span className="text-sm font-semibold uppercase tracking-wider">Longueur personnalisable</span>
+            </label>
+            {form.customLength?.enabled && (
+              <div className="space-y-3">
+                <p className="text-xs text-gray-400">
+                  Le client choisit une des longueurs courantes ou tape la longueur voulue (sur mesure). Le
+                  surcoût lié à la longueur est calculé automatiquement (réglage global dans Paramètres) et
+                  n&apos;est jamais affiché séparément au client.
+                </p>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider">
+                    Longueurs courantes proposées (cm)
+                  </label>
                   <input
-                    placeholder={V2.placeholder}
-                    value={s.name}
-                    onChange={(e) => updateSize(i, { name: e.target.value })}
-                    className="flex-1 rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
+                    value={(form.customLength.presets || []).join(", ")}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        customLength: {
+                          ...form.customLength,
+                          presets: e.target.value
+                            .split(",")
+                            .map((v) => parseFloat(v.trim()))
+                            .filter((n) => !isNaN(n)),
+                        },
+                      })
+                    }
+                    placeholder="39, 42"
+                    className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
                   />
-                  <input
-                    type="number"
-                    placeholder="+€"
-                    value={s.surcharge || 0}
-                    onChange={(e) => updateSize(i, { surcharge: parseFloat(e.target.value) || 0 })}
-                    className="w-20 rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
-                  />
-                  <button type="button" onClick={() => removeSize(i)} className="text-red-600">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
                 </div>
-              ))}
-            </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider">Mini (cm)</label>
+                    <input
+                      type="number"
+                      value={form.customLength.minCm ?? 30}
+                      onChange={(e) =>
+                        setForm({ ...form, customLength: { ...form.customLength, minCm: parseFloat(e.target.value) || 0 } })
+                      }
+                      className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider">Maxi (cm)</label>
+                    <input
+                      type="number"
+                      value={form.customLength.maxCm ?? 70}
+                      onChange={(e) =>
+                        setForm({ ...form, customLength: { ...form.customLength, maxCm: parseFloat(e.target.value) || 0 } })
+                      }
+                      className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          )}
 
           <div className="rounded-xl border border-gray-200 p-4">
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider">Attributs de la pièce</h3>

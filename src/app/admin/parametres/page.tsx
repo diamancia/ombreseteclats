@@ -347,6 +347,39 @@ export default function AdminSettingsPage() {
           </div>
         </Card>
 
+        <Card title="Tarification — longueur de chaîne">
+          <p className="text-xs text-gray-400">
+            Règle de calcul appliquée aux produits avec « longueur personnalisable » (colliers,
+            bracelets, gourmettes…) : le surcoût est calculé automatiquement à partir de la
+            longueur choisie et n&apos;est jamais montré séparément au client — seul le prix total
+            change. Surcoût = (longueur − longueur de référence) × prix au centimètre.
+          </p>
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <Field
+              type="number"
+              label="Longueur de référence (cm)"
+              value={settings.chainLengthPricing?.refCm ?? 40}
+              onChange={(v) =>
+                setSettings({
+                  ...settings,
+                  chainLengthPricing: { ...settings.chainLengthPricing, refCm: parseFloat(v) || 0 },
+                })
+              }
+            />
+            <Field
+              type="number"
+              label="Prix par centimètre (€)"
+              value={settings.chainLengthPricing?.pricePerCm ?? 5}
+              onChange={(v) =>
+                setSettings({
+                  ...settings,
+                  chainLengthPricing: { ...settings.chainLengthPricing, pricePerCm: parseFloat(v) || 0 },
+                })
+              }
+            />
+          </div>
+        </Card>
+
         <Card title="Modules">
           <p className="text-xs text-gray-400">
             Active ou désactive les fonctionnalités du site — aucune installation, tout est déjà intégré au code.
@@ -494,8 +527,8 @@ type NavLink = { href: string; label: string };
 // gère réellement ce contenu (Boutique -> Produits), sinon un simple aperçu de la page.
 function editActionFor(href: string): { kind: "inline" | "scroll" | "admin" | "preview"; url: string } {
   if (!href || href === "/") return { kind: "inline", url: "/?edit=1" };
+  if (href === "/contact" || href === "/#contact") return { kind: "scroll", url: "/admin/parametres#card-contact" };
   if (href.startsWith("/#")) {
-    if (href === "/#contact") return { kind: "scroll", url: "/admin/parametres#card-contact" };
     return { kind: "inline", url: `/?edit=1${href.slice(1)}` };
   }
   if (href.startsWith("/catalogue")) return { kind: "admin", url: "/admin/produits" };

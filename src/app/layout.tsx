@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartProvider";
 import CookieBanner from "@/components/CookieBanner";
 import { siteConfig } from "@/site.config";
+import Script from "next/script"; // ← 1. AJOUT DE L'IMPORT
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const playfair = Playfair_Display({
@@ -46,7 +47,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
       <head>
         <style dangerouslySetInnerHTML={{ __html: themeVars }} />
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        {/* ↓ 2. REMPLACE LA BALISE <script> PAR CE COMPOSANT */}
+        <Script
+          id="theme-init-script"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
       </head>
       <body className="min-h-full flex flex-col">
         <CartProvider>

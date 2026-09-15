@@ -13,7 +13,7 @@ type ImportItem = ProductAttrs & {
   name: string;
   basePrice: number;
   category: string;
-  gender: "homme" | "femme" | "mixte";
+  gender: "homme" | "femme" | "enfant" | "mixte";
   shortDesc: string;
   longDesc: string;
   hashtags: string[];
@@ -147,7 +147,9 @@ export default function MultiPhotoImport({
     setItems((prev) => prev.filter((i) => i.id !== id));
   }
 
-  const readyToImport = items.length > 0 && items.every((it) => it.basePrice > 0 && it.category);
+  // Aucun champ n'est bloquant : on importe ce qui est rempli, le reste (prix, catégorie…) se
+  // complète après coup dans la fiche produit sans empêcher l'enregistrement des photos.
+  const readyToImport = items.length > 0;
 
   async function importAll() {
     setSubmitting(true);
@@ -211,6 +213,7 @@ export default function MultiPhotoImport({
             >
               <option value="homme">Homme</option>
               <option value="femme">Femme</option>
+              <option value="enfant">Enfant</option>
               <option value="mixte">Mixte</option>
             </select>
           </div>
@@ -328,6 +331,7 @@ export default function MultiPhotoImport({
                       >
                         <option value="homme">Homme</option>
                         <option value="femme">Femme</option>
+                        <option value="enfant">Enfant</option>
                         <option value="mixte">Mixte</option>
                       </select>
                     </div>
@@ -335,6 +339,15 @@ export default function MultiPhotoImport({
                       <X className="h-4 w-4" />
                     </button>
                   </div>
+                  {(!it.basePrice || !it.category) && (
+                    <p className="mt-2 text-[10px] text-amber-600">
+                      {!it.basePrice && !it.category
+                        ? "Sans prix ni catégorie pour l'instant — à compléter plus tard dans Produits."
+                        : !it.basePrice
+                        ? "Sans prix pour l'instant — à compléter plus tard dans Produits."
+                        : "Sans catégorie pour l'instant — à compléter plus tard dans Produits."}
+                    </p>
+                  )}
 
                   <div className="mt-3 rounded-lg bg-gray-50 p-3">
                     <div className="mb-1.5 flex items-center justify-between">
@@ -409,7 +422,7 @@ export default function MultiPhotoImport({
           <p className="text-xs text-gray-400">
             {items.length === 0
               ? "Aucune photo ajoutée"
-              : `${items.length} photo${items.length > 1 ? "s" : ""} — prix et catégorie requis pour chacune`}
+              : `${items.length} photo${items.length > 1 ? "s" : ""} — remplis juste ce qui est prêt, le reste se complète après coup dans la fiche produit`}
           </p>
           <div className="flex gap-3">
             <button onClick={onClose} className="rounded-sm border border-gray-200 px-6 py-3 text-xs font-semibold uppercase tracking-widest">

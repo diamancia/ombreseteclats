@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { CreditCard, Award, Truck, Mail, Phone, MapPin } from "lucide-react";
 import { siteConfig } from "@/site.config";
-import { SocialIcon } from "@/components/SocialIcon";
+import { SocialIcon, SOCIAL_BRAND_COLORS, normalizePlatformKey } from "@/components/SocialIcon";
+import { buildMapsUrl } from "@/lib/maps";
 
 export type FooterSocialLink = { platform: string; url: string; active?: boolean };
 export type FooterNavLink = { href: string; label: string };
@@ -24,37 +25,13 @@ export default function Footer({
   address?: string;
 }) {
   const activeSocials = socialLinks.filter((s) => s.active !== false && s.url);
-  const quickLinks = navLinks.filter((l) => l.href !== "/" && l.href !== "/#contact");
+  const quickLinks = navLinks.filter((l) => l.href !== "/" && l.href !== "/#contact" && l.href !== "/contact");
 
   return (
     <footer className="mt-10 border-t border-[var(--accent)] bg-[var(--muted)]">
-      <div className="mx-auto grid max-w-7xl gap-6 px-6 py-10 md:grid-cols-3">
-        <div className="flex items-center gap-3">
-          <Award className="h-6 w-6 text-[var(--primary)]" />
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider">Argent massif 925</p>
-            <p className="text-xs text-[var(--foreground)]/60">Poinçonné, garanti 2 ans</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Truck className="h-6 w-6 text-[var(--primary)]" />
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider">Livraison offerte</p>
-            <p className="text-xs text-[var(--foreground)]/60">Dès 80€ en France & Europe</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <CreditCard className="h-6 w-6 text-[var(--primary)]" />
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider">Paiement sécurisé</p>
-            <p className="text-xs text-[var(--foreground)]/60">CB, Apple Pay, PayPal</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Corps principal — colonnes Marque / Navigation / Légal / Contact, standard d'un
-          pied de page "pro" plutôt qu'un simple empilement de blocs. */}
-      <div className="mx-auto grid max-w-7xl gap-10 border-t border-[var(--accent)] px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Corps principal — colonnes Marque / Navigation / Légal / Contact, allégé (paddings
+          réduits, plus de bloc badges séparé — condensé en une ligne ci-dessous). */}
+      <div className="mx-auto grid max-w-7xl gap-8 px-6 py-8 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={siteConfig.brand.logoUrl} alt={brandName} className="h-10 w-auto object-contain" />
@@ -68,7 +45,8 @@ export default function Footer({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.platform}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--foreground)]/60 ring-1 ring-[var(--accent)] transition-colors hover:text-[var(--primary)] hover:ring-[var(--primary)]"
+                  style={{ color: SOCIAL_BRAND_COLORS[normalizePlatformKey(s.platform)] }}
+                  className="flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-[var(--accent)] opacity-90 transition-opacity hover:opacity-100"
                 >
                   <SocialIcon platform={s.platform} className="h-4 w-4" />
                 </a>
@@ -139,7 +117,17 @@ export default function Footer({
               {address && (
                 <li className="flex items-start gap-2 text-[var(--foreground)]/70">
                   <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--primary)]" />
-                  <span>{address}</span>
+                  <span>
+                    {address}{" "}
+                    <a
+                      href={buildMapsUrl(address)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="whitespace-nowrap text-[var(--primary)] hover:underline"
+                    >
+                      · Voir sur Google Maps
+                    </a>
+                  </span>
                 </li>
               )}
             </ul>
@@ -147,21 +135,22 @@ export default function Footer({
         )}
       </div>
 
-      {address && process.env.GOOGLE_MAPS_API_KEY && (
-        <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl px-6 pb-10">
-          <iframe
-            title="Localisation"
-            width="100%"
-            height="220"
-            style={{ border: 0 }}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            src={`https://www.google.com/maps/embed/v1/place?key=${process.env.GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(address)}`}
-          />
+      {/* Réassurance — condensée en une seule ligne (plus de bloc à part). */}
+      <div className="border-t border-[var(--accent)] px-6 py-3">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-6 gap-y-1.5 text-[11px] text-[var(--foreground)]/60">
+          <span className="flex items-center gap-1.5">
+            <Award className="h-3.5 w-3.5 text-[var(--primary)]" /> Argent massif 925, garanti 2 ans
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Truck className="h-3.5 w-3.5 text-[var(--primary)]" /> Livraison offerte dès 80€
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CreditCard className="h-3.5 w-3.5 text-[var(--primary)]" /> Paiement sécurisé
+          </span>
         </div>
-      )}
+      </div>
 
-      <div className="border-t border-[var(--accent)] py-5 text-center text-xs text-[var(--foreground)]/50">
+      <div className="border-t border-[var(--accent)] py-4 text-center text-xs text-[var(--foreground)]/50">
         <p>© {new Date().getFullYear()} {brandName} — {siteConfig.brand.tagline} — Tous droits réservés</p>
       </div>
     </footer>
