@@ -42,7 +42,7 @@ export default function Navbar({
       {/* Le fond reste noir dans les deux modes (identité de marque, "noir absolu") — le
           texte est donc fixé en clair ici, indépendamment de --foreground qui, lui,
           bascule avec le thème pour le reste du site. */}
-      <header className="sticky top-0 z-40 border-b border-[var(--accent)] bg-black/95 text-[#f5f1e8] backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-[var(--accent)] bg-black text-[#f5f1e8]">
         <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6 md:h-28">
           <Link href="/" className="flex items-center" aria-label={brandName}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -109,33 +109,47 @@ export default function Navbar({
             </button>
           </div>
         </div>
-
-        {mobileOpen && (
-          <div className="fixed inset-0 z-50 flex md:hidden">
-            <div className="flex-1 bg-black/70" onClick={() => setMobileOpen(false)} />
-            <aside
-              className="w-72 border-l border-[var(--accent)] p-6 shadow-2xl"
-              style={{ backgroundColor: "#0a0a0a", color: "#f5f1e8" }}
-            >
-              <button onClick={() => setMobileOpen(false)} className="mb-6 ml-auto block">
-                <X className="h-5 w-5" />
-              </button>
-              <nav className="space-y-4">
-                {links.map((l) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="block text-lg font-medium hover:text-[var(--primary)]"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
-              </nav>
-            </aside>
-          </div>
-        )}
       </header>
+
+      {/* Rendu en dehors du <header> : un ancêtre avec backdrop-blur/filter crée un
+          "containing block" pour position:fixed, ce qui cassait la couverture plein écran
+          du panneau (fond quasi transparent, texte superposé à la page en dessous). */}
+      <div
+        className={`fixed inset-0 z-50 md:hidden ${mobileOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+        aria-hidden={!mobileOpen}
+      >
+        <div
+          onClick={() => setMobileOpen(false)}
+          className={`absolute inset-0 bg-black/70 transition-opacity duration-300 ${
+            mobileOpen ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        <aside
+          className={`absolute right-0 top-0 flex h-full w-80 max-w-[85vw] flex-col border-l border-[var(--primary)]/30 bg-black p-6 shadow-2xl transition-transform duration-300 ${
+            mobileOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+          style={{ backgroundColor: "#0a0a0a", color: "#f5f1e8" }}
+        >
+          <div className="mb-8 flex items-center justify-between">
+            <span className="font-serif text-lg tracking-wide">{brandName}</span>
+            <button onClick={() => setMobileOpen(false)} aria-label="Fermer le menu" className="text-[#f5f1e8]/70 hover:text-[var(--primary)]">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <nav className="flex flex-col gap-1">
+            {links.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                onClick={() => setMobileOpen(false)}
+                className="border-b border-white/10 py-3.5 text-base font-medium uppercase tracking-wider text-[#f5f1e8] hover:text-[var(--primary)]"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+        </aside>
+      </div>
     </>
   );
 }
