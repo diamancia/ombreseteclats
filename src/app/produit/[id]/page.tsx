@@ -6,49 +6,49 @@ import Cart from "@/components/Cart";
 import ProductOrderForm from "@/components/ProductOrderForm";
 import ProductGallery from "@/components/ProductGallery";
 import ProductCard from "@/components/ProductCard";
+import ContactButton from "@/components/ContactButton";
 import { ArrowLeft } from "lucide-react";
-import { connectDb } from "@/lib/mongoose";
-import { Product, Settings } from "@/lib/models";
-import { isValidObjectId } from "mongoose";
+import { getProductById, listProducts, getSettings } from "@/lib/db";
 import { siteConfig } from "@/site.config";
 
 export const dynamic = "force-dynamic";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!isValidObjectId(id)) notFound();
-  await connectDb();
-  const p = await Product.findById(id).populate("category").lean();
-  if (!p) notFound();
-  const settings = await Settings.findOne().lean();
-  const product: any = JSON.parse(JSON.stringify(p));
+  if (!UUID_RE.test(id)) notFound();
+  const product = await getProductById(id);
+  if (!product) notFound();
+  const settings = await getSettings();
   const brandName = (settings as any)?.brandName || siteConfig.brand.name;
 
   // Suggestions: same category first, then anything else (exclude current)
   const sameCatDocs = product.category
-    ? await Product.find({ _id: { $ne: product._id }, category: product.category._id, status: { $ne: "unavailable" } })
-        .populate("category")
-        .limit(4)
-        .lean()
+    ? await listProducts({ excludeId: product._id, categoryId: product.category._id, statusNot: "unavailable", limit: 4 })
     : [];
   let suggestions = sameCatDocs;
   if (suggestions.length < 4) {
-    const fillers = await Product.find({ _id: { $ne: product._id, $nin: sameCatDocs.map((s: any) => s._id) }, status: { $ne: "unavailable" } })
-      .populate("category")
-      .limit(4 - suggestions.length)
-      .lean();
-    suggestions = [...suggestions, ...fillers];
+    const fillers = (
+      await listProducts({ excludeId: product._id, statusNot: "unavailable", limit: 4 - suggestions.length + sameCatDocs.length })
+    ).filter((f) => !sameCatDocs.some((s) => s._id === f._id));
+    suggestions = [...suggestions, ...fillers.slice(0, 4 - suggestions.length)];
   }
-  const suggestionsJson: any[] = JSON.parse(JSON.stringify(suggestions));
+  const suggestionsJson: any[] = suggestions;
 
   // Gallery: main + extras, deduplicated
-  const galleryImages = [product.imageUrl, ...(product.images || [])]
-    .filter(Boolean)
+  const galleryImages = ([product.imageUrl, ...(product.images || [])].filter(Boolean) as string[])
     .filter((url, i, arr) => arr.indexOf(url) === i);
 
   return (
     <>
-      <Navbar brandName={brandName} />
+      <Navbar
+        brandName={brandName}
+        navLinks={(settings as any)?.navLinks}
+        announcements={(settings as any)?.announcements}
+        socialLinks={(settings as any)?.socialLinks}
+        address={(settings as any)?.address}
+      />
       <Cart />
       <main className="min-h-screen bg-[var(--background)] py-10">
         <div className="mx-auto max-w-6xl px-6">
@@ -74,7 +74,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                   <strong>{siteConfig.product.allergensLabel} :</strong> {product.allergens}
                 </p>
               )}
-              <ProductOrderForm product={product} />
+              <ProductOrderForm product={product} pricingRule={(settings as any)?.chainLengthPricing} />
             </div>
           </div>
 
@@ -93,7 +93,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
       </main>
-      <Footer brandName={brandName} />
+      <Footer
+        brandName={brandName}
+        navLinks={(settings as any)?.navLinks}
+        socialLinks={(settings as any)?.socialLinks}
+        email={(settings as any)?.email}
+        phone={(settings as any)?.phone}
+        address={(settings as any)?.address}
+      />
+      {siteConfig.features.whatsappButton && <ContactButton phone={(settings as any)?.phone} />}
     </>
   );
 }

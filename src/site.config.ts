@@ -35,6 +35,19 @@ export interface SiteConfig {
     primaryDark: string;
     accent: string;
     muted: string;
+    // Accent réservé à la collection Femme — cahier des charges 4.6 (section 5 : pas de thème
+    // clair global, l'or rosé n'est utilisé que localement sur les blocs/badges Femme).
+    roseGold: string;
+    // Variante claire du même thème (bouton clair/sombre) — même famille de couleurs
+    // (ivoire chaud / champagne), inversée plutôt qu'une palette différente.
+    light: {
+      background: string;
+      foreground: string;
+      primary: string;
+      primaryDark: string;
+      accent: string;
+      muted: string;
+    };
   };
   meta: { title: string; description: string };
   hero: { defaultTitle: string; defaultSubtitle: string; defaultImageUrl: string };
@@ -87,12 +100,21 @@ export const siteConfig: SiteConfig = {
     primaryDark: "#e8dfc8",    // hover plus clair
     accent: "#2a2a2a",          // gris très foncé (bordures, cartes)
     muted: "#141414",           // noir charbon (sections, cards)
+    roseGold: "#C9A08A",        // or rosé discret — réservé à la collection Femme
+    light: {
+      background: "#f7f3ea",    // ivoire chaud (même teinte que le "foreground" sombre, inversé)
+      foreground: "#1c1712",    // noir chaud, lisible sur fond clair
+      primary: "#8a7550",       // champagne assombri pour rester lisible sur fond clair
+      primaryDark: "#6e5c3e",
+      accent: "#e9e1cd",
+      muted: "#f0e9d9",
+    },
   },
 
   meta: {
-    title: "Ombre & Éclats — Bijouterie d'Homme en Argent Massif",
+    title: "Ombre & Éclats - Bijoux argent massif 925 pour homme | Livraison offerte",
     description:
-      "Bagues, chevalières et gourmettes en argent massif 925, façonnées à la main. Livraison en 48h en France.",
+      "Découvrez Ombre & Éclats, notre sélection de bagues, chevalières et gourmettes en argent massif 925 façonnées à la main. Livraison rapide, paiement sécurisé.",
   },
 
   hero: {
@@ -112,9 +134,11 @@ export const siteConfig: SiteConfig = {
   navbar: {
     links: [
       { href: "/", label: "Accueil" },
-      { href: "/catalogue", label: "Collections" },
+      { href: "/catalogue", label: "Boutique" },
+      { href: "/catalogue?genre=homme", label: "Collections Homme" },
+      { href: "/catalogue?genre=femme", label: "Collections Femme" },
+      { href: "/catalogue?genre=enfant", label: "Collections Enfant" },
       { href: "/sur-mesure", label: "Sur-mesure" },
-      { href: "/a-propos", label: "Maison" },
       { href: "/contact", label: "Contact" },
     ],
   },
@@ -126,7 +150,8 @@ export const siteConfig: SiteConfig = {
       labelSingular: "finition",
       placeholder: "Nom de la finition (Poli, Brossé, Noirci…)",
       hasImage: true,
-      enabled: true,
+      // Non pertinent pour la bijouterie — désactivé (remplacé par la longueur personnalisable).
+      enabled: false,
     },
     variant2: {
       key: "sizes",
@@ -134,7 +159,8 @@ export const siteConfig: SiteConfig = {
       labelSingular: "taille",
       placeholder: "Taille (ex: 58, 60, 19cm…)",
       hasImage: false,
-      enabled: true,
+      // Remplacé par le sélecteur de longueur de chaîne (product.customLength).
+      enabled: false,
     },
     hasAllergens: true,
     allergensLabel: "Matière & entretien",
@@ -149,12 +175,16 @@ export const siteConfig: SiteConfig = {
     whatsappButton: true,
   },
 
+  // Types de pièces proposées en création sur-mesure (dropdown du formulaire /sur-mesure).
   customOrderEvents: [
-    "Gravure initiales",
-    "Chevalière aux armoiries",
-    "Pièce unique sur-mesure",
-    "Alliance homme",
-    "Cadeau personnalisé",
+    "Bague",
+    "Bracelet",
+    "Collier",
+    "Pendentif",
+    "Boucles d'oreilles",
+    "Broche",
+    "Mdemma",
+    "Gourmette",
     "Autre",
   ],
 

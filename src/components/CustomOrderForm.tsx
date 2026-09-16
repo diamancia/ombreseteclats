@@ -1,25 +1,51 @@
 "use client";
 import { useState } from "react";
 import DatePickerAvailable from "@/components/DatePickerAvailable";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Paperclip, X, Loader2 } from "lucide-react";
 import { siteConfig } from "@/site.config";
+import { uploadCustomOrderImage } from "@/lib/publicUpload";
 
-const EVENT_TYPES = siteConfig.customOrderEvents || ["Anniversaire", "Autre"];
+const PIECE_TYPES = siteConfig.customOrderEvents || ["Autre"];
 
 export default function CustomOrderForm({ settings }: { settings: any }) {
   const [form, setForm] = useState({
     client: "",
     email: "",
     phone: "",
-    eventType: EVENT_TYPES[0],
+    eventType: PIECE_TYPES[0],
     parts: 10,
     pickupDate: "",
     slot: settings.slots?.[0] || "",
     note: "",
   });
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleAttachment(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAttachmentPreview(URL.createObjectURL(file));
+    setUploadingAttachment(true);
+    setError(null);
+    try {
+      const url = await uploadCustomOrderImage(file);
+      setAttachmentUrl(url);
+    } catch (err: any) {
+      setError(err.message);
+      setAttachmentPreview(null);
+    } finally {
+      setUploadingAttachment(false);
+    }
+  }
+
+  function removeAttachment() {
+    setAttachmentUrl(null);
+    setAttachmentPreview(null);
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,6 +72,7 @@ export default function CustomOrderForm({ settings }: { settings: any }) {
           slot: form.slot,
           mode: "pickup",
           note: `[DEMANDE SUR-MESURE]\nType: ${form.eventType}\nQuantité: ${form.parts}\n\nDescription:\n${form.note}`,
+          attachmentUrl: attachmentUrl || undefined,
         }),
       });
       const data = await res.json();
@@ -85,13 +112,13 @@ export default function CustomOrderForm({ settings }: { settings: any }) {
         <h2 className="mb-4 font-serif text-xl">Votre projet</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Type d&apos;événement</label>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Type de pièce</label>
             <select
               value={form.eventType}
               onChange={(e) => setForm({ ...form, eventType: e.target.value })}
               className="w-full rounded-lg border border-[var(--accent)] bg-[var(--muted)] px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
             >
-              {EVENT_TYPES.map((ev) => (
+              {PIECE_TYPES.map((ev) => (
                 <option key={ev}>{ev}</option>
               ))}
             </select>
@@ -105,9 +132,37 @@ export default function CustomOrderForm({ settings }: { settings: any }) {
             value={form.note}
             onChange={(e) => setForm({ ...form, note: e.target.value })}
             required
-            placeholder="Parfums souhaités, couleurs, décoration, allergies, inspirations…"
+            placeholder="Métal souhaité, pierre, gravure, taille, inspirations…"
             className="w-full rounded-lg border border-[var(--accent)] bg-[var(--muted)] px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
           />
+        </div>
+        <div className="mt-4">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Photo d&apos;inspiration (optionnel)</label>
+          {attachmentPreview ? (
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={attachmentPreview} alt="" className="h-16 w-16 rounded-lg object-cover" />
+              {uploadingAttachment ? (
+                <span className="flex items-center gap-1.5 text-xs text-[var(--foreground)]/60">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Envoi…
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={removeAttachment}
+                  className="flex items-center gap-1 text-xs text-red-600 hover:underline"
+                >
+                  <X className="h-3.5 w-3.5" /> Retirer
+                </button>
+              )}
+            </div>
+          ) : (
+            <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[var(--accent)] px-4 py-2.5 text-xs text-[var(--foreground)]/60 hover:border-[var(--primary)] hover:text-[var(--primary)]">
+              <Paperclip className="h-4 w-4" />
+              Joindre une photo (modèle, croquis, bijou à reproduire…)
+              <input type="file" accept="image/*" onChange={handleAttachment} className="hidden" />
+            </label>
+          )}
         </div>
       </div>
 
@@ -143,10 +198,10 @@ export default function CustomOrderForm({ settings }: { settings: any }) {
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || uploadingAttachment}
         className="w-full rounded-sm bg-[var(--primary)] py-4 text-xs font-semibold uppercase tracking-widest text-[var(--background)] hover:bg-[var(--primary-dark)] disabled:opacity-60"
       >
-        {submitting ? "Envoi…" : "Envoyer ma demande"}
+        {submitting ? "Envoi…" : uploadingAttachment ? "Envoi de la photo…" : "Envoyer ma demande"}
       </button>
       <p className="text-center text-xs text-[var(--foreground)]/50">
         Nous vous recontacterons pour confirmer la faisabilité et le prix.

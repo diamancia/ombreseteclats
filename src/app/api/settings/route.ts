@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { connectDb } from "@/lib/mongoose";
-import { Settings } from "@/lib/models";
-import { verifyAdmin } from "@/lib/auth";
+import { getSettings, upsertSettings } from "@/lib/db";
+import { verifyUser } from "@/lib/auth";
 import { siteConfig } from "@/site.config";
+import { DEFAULT_MODULE_FLAGS } from "@/lib/modules";
+import { DEFAULT_METAL_TYPES, DEFAULT_GOLD_COLORS } from "@/lib/metals";
 
 export async function GET() {
-  await connectDb();
-  const s = await Settings.findOne();
+  const s = await getSettings();
   if (!s) {
     return NextResponse.json({
       brandName: siteConfig.brand.name,
@@ -18,16 +18,26 @@ export async function GET() {
       slots: siteConfig.defaults.slots,
       openWeekdays: siteConfig.defaults.openWeekdays,
       minDelay: siteConfig.defaults.minDelay,
+      address: "14 rue des Orfèvres, 75001 Paris",
+      socialAutoPublish: true,
+      navLinks: siteConfig.navbar.links,
+      socialLinks: [],
+      announcements: [],
+      bannerEnabled: false,
+      bannerType: "photo",
+      bannerSize: "standard",
+      moduleFlags: DEFAULT_MODULE_FLAGS,
+      metalTypes: DEFAULT_METAL_TYPES,
+      goldColors: DEFAULT_GOLD_COLORS,
+      chainLengthPricing: { refCm: 40, pricePerCm: 5 },
     });
   }
-  const obj = s.toObject();
-  delete (obj as any).adminPassword;
+  const { adminPassword, ...obj } = s;
   return NextResponse.json(obj);
 }
 
 export async function PUT(req: NextRequest) {
-  if (!verifyAdmin(req)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  await connectDb();
+  if (!verifyUser(req, "parametres")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   try {
     const updates: any = await req.json();
     if (updates.adminPassword && updates.adminPassword.length > 0) {
@@ -35,9 +45,8 @@ export async function PUT(req: NextRequest) {
     } else {
       delete updates.adminPassword;
     }
-    const s = await Settings.findOneAndUpdate({}, updates, { new: true, upsert: true, runValidators: true });
-    const obj = s.toObject();
-    delete (obj as any).adminPassword;
+    const s = await upsertSettings(updates);
+    const { adminPassword, ...obj } = s;
     return NextResponse.json(obj);
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? "Erreur" }, { status: 400 });

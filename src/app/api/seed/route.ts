@@ -1,21 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { connectDb } from "@/lib/mongoose";
-import { Settings, Category, Product, Order } from "@/lib/models";
+import { db, getSettings, upsertSettings, bulkInsertProducts, bulkInsertOrders, countOrders } from "@/lib/db";
 import { siteConfig } from "@/site.config";
 import { getLegalPreset } from "@/lib/legalPresets";
+import { verifyUser } from "@/lib/auth";
 
-export async function POST() {
-  await connectDb();
+export async function POST(req: NextRequest) {
+  const existingSettings = await getSettings();
 
-  await Product.deleteMany({});
-  await Category.deleteMany({});
-  await Order.deleteMany({});
+  // Premier démarrage (aucun Settings en base) : pas d'admin encore créé, donc pas de
+  // jeton possible — on autorise l'amorçage initial. Une fois le site initialisé, reseed
+  // est destructeur (vide Produits/Catégories/Commandes) : on exige un admin authentifié.
+  if (existingSettings && !verifyUser(req)) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
 
-  const existingSettings = await Settings.findOne();
+  // "delete all" nécessite un filtre côté PostgREST — id IS NOT NULL matche toujours (clé
+  // primaire jamais nulle), équivalent de deleteMany({}) côté Mongoose.
+  await db().from("products").delete().not("id", "is", null);
+  await db().from("categories").delete().not("id", "is", null);
+  await db().from("orders").delete().not("id", "is", null);
+
   if (!existingSettings) {
     const legal = getLegalPreset();
-    await Settings.create({
+    await upsertSettings({
       brandName: siteConfig.brand.name,
       brandTagline: siteConfig.brand.tagline,
       heroTitle: siteConfig.hero.defaultTitle,
@@ -36,51 +44,29 @@ export async function POST() {
     });
   }
 
-  const cats = await Category.insertMany([
-    {
-      name: "Bagues",
-      emoji: "◯",
-      imageUrl:
-        "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=85",
-    },
-    {
-      name: "Chevalières",
-      emoji: "⬟",
-      imageUrl:
-        "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&auto=format&fit=crop&q=85",
-    },
-    {
-      name: "Gourmettes",
-      emoji: "⎓",
-      imageUrl:
-        "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=800&auto=format&fit=crop&q=85",
-    },
-  ]);
+  const { data: cats, error: catsError } = await db()
+    .from("categories")
+    .insert([
+      {
+        name: "Bagues",
+        emoji: "◯",
+        image_url: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=85",
+      },
+      {
+        name: "Chevalières",
+        emoji: "⬟",
+        image_url: "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&auto=format&fit=crop&q=85",
+      },
+      {
+        name: "Gourmettes",
+        emoji: "⎓",
+        image_url: "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=800&auto=format&fit=crop&q=85",
+      },
+    ])
+    .select("id, name");
+  if (catsError) throw catsError;
 
-  const catMap = Object.fromEntries(cats.map((c: any) => [c.name, c._id]));
-
-  const finitions = {
-    poli: {
-      name: "Poli brillant",
-      surcharge: 0,
-      imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&auto=format&fit=crop&q=80",
-    },
-    brosse: {
-      name: "Brossé mat",
-      surcharge: 0,
-      imageUrl: "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=400&auto=format&fit=crop&q=80",
-    },
-    noirci: {
-      name: "Argent noirci",
-      surcharge: 15,
-      imageUrl: "https://images.unsplash.com/photo-1608042314453-ae338d80c427?w=400&auto=format&fit=crop&q=80",
-    },
-    orose: {
-      name: "Plaqué or rose",
-      surcharge: 40,
-      imageUrl: "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=400&auto=format&fit=crop&q=80",
-    },
-  };
+  const catMap = Object.fromEntries((cats || []).map((c) => [c.name, c.id]));
 
   const tailles_bague = [
     { name: "Taille 52", surcharge: 0 },
@@ -100,7 +86,7 @@ export async function POST() {
     { name: "22 cm", surcharge: 15 },
   ];
 
-  await Product.insertMany([
+  const { created: products, errors: productErrors } = await bulkInsertProducts([
     // ── BAGUES ──────────────────────────────────────────────
     {
       name: "Bague Stratum",
@@ -113,13 +99,13 @@ export async function POST() {
       status: "available",
       category: catMap["Bagues"],
       allergens: "Argent massif 925 · Nettoyer avec un chiffon doux · Éviter l'eau chlorée",
-      imageUrl:
-        "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&auto=format&fit=crop&q=85",
+      imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&auto=format&fit=crop&q=85",
       images: [
         "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1596944946297-0e24a7a79386?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -133,13 +119,13 @@ export async function POST() {
       status: "available",
       category: catMap["Bagues"],
       allergens: "Argent massif 925 · Pierre naturelle onyx · Retirer avant contact avec produits chimiques",
-      imageUrl:
-        "https://images.unsplash.com/photo-1598560917807-1bae44bd2be8?w=1200&auto=format&fit=crop&q=85",
+      imageUrl: "https://images.unsplash.com/photo-1598560917807-1bae44bd2be8?w=1200&auto=format&fit=crop&q=85",
       images: [
         "https://images.unsplash.com/photo-1598560917807-1bae44bd2be8?w=1200&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1603974372039-adc49044b6bd?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -153,12 +139,10 @@ export async function POST() {
       status: "available",
       category: catMap["Bagues"],
       allergens: "Argent massif 925 · Nettoyage au chiffon doux recommandé",
-      imageUrl:
-        "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.poli, finitions.brosse],
+      imageUrl: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -172,12 +156,10 @@ export async function POST() {
       status: "available",
       category: catMap["Bagues"],
       allergens: "Argent massif 925 poinçonné",
-      imageUrl:
-        "https://images.unsplash.com/photo-1596944946297-0e24a7a79386?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1596944946297-0e24a7a79386?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.poli, finitions.noirci, finitions.orose],
+      imageUrl: "https://images.unsplash.com/photo-1596944946297-0e24a7a79386?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1596944946297-0e24a7a79386?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -191,13 +173,13 @@ export async function POST() {
       status: "available",
       category: catMap["Bagues"],
       allergens: "Argent massif 925 · Intérieur confort · Garantie 2 ans",
-      imageUrl:
-        "https://images.unsplash.com/photo-1535556116002-6281ff3e9f36?w=1200&auto=format&fit=crop&q=85",
+      imageUrl: "https://images.unsplash.com/photo-1535556116002-6281ff3e9f36?w=1200&auto=format&fit=crop&q=85",
       images: [
         "https://images.unsplash.com/photo-1535556116002-6281ff3e9f36?w=1200&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.brosse, finitions.poli],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -211,12 +193,10 @@ export async function POST() {
       status: "available",
       category: catMap["Bagues"],
       allergens: "Argent massif 925 martelé",
-      imageUrl:
-        "https://images.unsplash.com/photo-1611107683227-e9060eccd846?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1611107683227-e9060eccd846?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      imageUrl: "https://images.unsplash.com/photo-1611107683227-e9060eccd846?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1611107683227-e9060eccd846?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
 
@@ -232,13 +212,13 @@ export async function POST() {
       status: "available",
       category: catMap["Chevalières"],
       allergens: "Argent massif 925 poinçonné · Gravure disponible sur demande",
-      imageUrl:
-        "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=1200&auto=format&fit=crop&q=85",
+      imageUrl: "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=1200&auto=format&fit=crop&q=85",
       images: [
         "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=1200&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -252,12 +232,10 @@ export async function POST() {
       status: "available",
       category: catMap["Chevalières"],
       allergens: "Argent massif 925",
-      imageUrl:
-        "https://images.unsplash.com/photo-1608042314453-ae338d80c427?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1608042314453-ae338d80c427?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      imageUrl: "https://images.unsplash.com/photo-1608042314453-ae338d80c427?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1608042314453-ae338d80c427?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -271,12 +249,10 @@ export async function POST() {
       status: "available",
       category: catMap["Chevalières"],
       allergens: "Argent massif 925",
-      imageUrl:
-        "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.brosse, finitions.noirci],
+      imageUrl: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -290,12 +266,10 @@ export async function POST() {
       status: "available",
       category: catMap["Chevalières"],
       allergens: "Argent massif 925 · Onyx naturel · Éviter chocs et produits chimiques",
-      imageUrl:
-        "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.poli, finitions.noirci],
+      imageUrl: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
     {
@@ -309,12 +283,10 @@ export async function POST() {
       status: "available",
       category: catMap["Chevalières"],
       allergens: "Argent massif 925 · Gravure main · Style typographique à préciser en note",
-      imageUrl:
-        "https://images.unsplash.com/photo-1603566541830-a1ea21baeca7?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1603566541830-a1ea21baeca7?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      imageUrl: "https://images.unsplash.com/photo-1603566541830-a1ea21baeca7?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1603566541830-a1ea21baeca7?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_bague,
     },
 
@@ -330,13 +302,13 @@ export async function POST() {
       status: "available",
       category: catMap["Gourmettes"],
       allergens: "Argent massif 925 · Fermoir mousqueton · Entretien au chiffon doux",
-      imageUrl:
-        "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=1200&auto=format&fit=crop&q=85",
+      imageUrl: "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=1200&auto=format&fit=crop&q=85",
       images: [
         "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=1200&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=1200&auto=format&fit=crop&q=85",
       ],
-      flavors: [finitions.poli, finitions.brosse],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_gourmette,
     },
     {
@@ -350,12 +322,10 @@ export async function POST() {
       status: "available",
       category: catMap["Gourmettes"],
       allergens: "Argent massif 925 · Poids important (~65g)",
-      imageUrl:
-        "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.poli, finitions.brosse, finitions.noirci],
+      imageUrl: "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_gourmette,
     },
     {
@@ -369,12 +339,10 @@ export async function POST() {
       status: "available",
       category: catMap["Gourmettes"],
       allergens: "Argent massif 925 · Gravure plaque offerte (précisez en note)",
-      imageUrl:
-        "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.poli, finitions.brosse],
+      imageUrl: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_gourmette,
     },
     {
@@ -388,12 +356,10 @@ export async function POST() {
       status: "available",
       category: catMap["Gourmettes"],
       allergens: "Argent massif 925",
-      imageUrl:
-        "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.poli, finitions.brosse],
+      imageUrl: "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_gourmette,
     },
     {
@@ -407,20 +373,18 @@ export async function POST() {
       status: "available",
       category: catMap["Gourmettes"],
       allergens: "Argent massif 925 · Ciselure main · Chiffon de polissage fourni",
-      imageUrl:
-        "https://images.unsplash.com/photo-1613843574279-19baf4fe0b71?w=1200&auto=format&fit=crop&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1613843574279-19baf4fe0b71?w=1200&auto=format&fit=crop&q=85",
-      ],
-      flavors: [finitions.poli, finitions.noirci],
+      imageUrl: "https://images.unsplash.com/photo-1613843574279-19baf4fe0b71?w=1200&auto=format&fit=crop&q=85",
+      images: ["https://images.unsplash.com/photo-1613843574279-19baf4fe0b71?w=1200&auto=format&fit=crop&q=85"],
+      flavors: [],
+      metal: "argent",
       sizes: tailles_gourmette,
     },
   ]);
+  if (productErrors.length) console.error("seed product errors:", productErrors);
 
-  const products = await Product.find().lean();
-  const pMap = Object.fromEntries(products.map((p: any) => [p.name, p]));
+  const pMap = Object.fromEntries(products.map((p) => [p.name, p]));
 
-  await Order.insertMany([
+  await bulkInsertOrders([
     {
       client: "Antoine Valentin",
       email: "antoine.v@gmail.com",
@@ -433,7 +397,6 @@ export async function POST() {
       address: "14 rue de Turenne, 75003 Paris",
       status: "confirmed",
       paymentStatus: "paid",
-      createdAt: new Date("2026-04-24T14:30:00"),
     },
     {
       client: "Julien Rochefort",
@@ -448,7 +411,6 @@ export async function POST() {
       address: "32 avenue Jean Jaurès, 69007 Lyon",
       status: "ready",
       paymentStatus: "paid",
-      createdAt: new Date("2026-04-23T09:15:00"),
     },
     {
       client: "Karim El Amrani",
@@ -463,7 +425,6 @@ export async function POST() {
       note: "Gravure : initiales K.E.A. en typographie classique serif",
       status: "pending",
       paymentStatus: "unpaid",
-      createdAt: new Date("2026-04-26T08:00:00"),
     },
     {
       client: "Mathieu Dumont",
@@ -474,10 +435,9 @@ export async function POST() {
       total: 149,
       mode: "delivery",
       address: "5 boulevard Voltaire, 75011 Paris",
-      note: "Gravure intérieure : \"M & L 06/26\"",
+      note: 'Gravure intérieure : "M & L 06/26"',
       status: "confirmed",
       paymentStatus: "paid",
-      createdAt: new Date("2026-04-25T18:45:00"),
     },
     {
       client: "Alexandre Mercier",
@@ -492,7 +452,6 @@ export async function POST() {
       address: "22 rue Saint-Honoré, 75001 Paris",
       status: "pending",
       paymentStatus: "paid",
-      createdAt: new Date("2026-04-26T11:20:00"),
     },
     {
       client: "Thomas Lefebvre",
@@ -505,10 +464,9 @@ export async function POST() {
       total: 228,
       mode: "delivery",
       address: "14 cours Clemenceau, 33000 Bordeaux",
-      note: "Gravure plaque : \"Thomas 1995\"",
+      note: 'Gravure plaque : "Thomas 1995"',
       status: "delivered",
       paymentStatus: "paid",
-      createdAt: new Date("2026-04-20T10:30:00"),
     },
     {
       client: "Samir Benali",
@@ -522,7 +480,6 @@ export async function POST() {
       address: "3 rue Berthelot, 69007 Lyon",
       status: "confirmed",
       paymentStatus: "paid",
-      createdAt: new Date("2026-04-22T16:00:00"),
     },
     {
       client: "Nicolas Giraud",
@@ -536,16 +493,15 @@ export async function POST() {
       note: "2 bagues identiques — cadeau couple",
       status: "pending",
       paymentStatus: "unpaid",
-      createdAt: new Date("2026-04-26T07:45:00"),
     },
   ]);
 
   return NextResponse.json({
     ok: true,
     created: {
-      categories: cats.length,
+      categories: (cats || []).length,
       products: products.length,
-      orders: await Order.countDocuments(),
+      orders: await countOrders(),
     },
     adminPassword: existingSettings ? "(existait déjà)" : "Admin1234!",
   });

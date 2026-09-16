@@ -2,19 +2,18 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
 import { Mail, Phone, MapPin } from "lucide-react";
-import { connectDb } from "@/lib/mongoose";
-import { Settings } from "@/lib/models";
+import { SocialIcon } from "@/components/SocialIcon";
+import { getSettings } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function ContactPage() {
-  await connectDb();
-  const s = await Settings.findOne().lean();
-  const settings: any = JSON.parse(JSON.stringify(s || {}));
+  const settings: any = (await getSettings()) || {};
+  const waHref = settings.phone ? `https://wa.me/${settings.phone.replace(/\D/g, "")}` : undefined;
 
   return (
     <>
-      <Navbar brandName={settings.brandName} />
+      <Navbar brandName={settings.brandName} navLinks={settings.navLinks} />
       <Cart />
       <main className="min-h-screen bg-[var(--background)] py-16">
         <div className="mx-auto max-w-4xl px-6">
@@ -34,6 +33,21 @@ export default async function ContactPage() {
               <InfoCard icon={<MapPin className="h-6 w-6" />} title="Zone" value={settings.zone} />
             )}
           </div>
+
+          {settings.address && process.env.GOOGLE_MAPS_API_KEY && (
+            <div className="mt-12 overflow-hidden rounded-2xl shadow-sm">
+              <iframe
+                title="Localisation"
+                width="100%"
+                height="320"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(settings.address)}`}
+              />
+            </div>
+          )}
 
           <div className="mt-12 rounded-2xl bg-[var(--muted)] p-8 shadow-sm">
             <h2 className="mb-4 font-serif text-2xl">Une demande sur-mesure ?</h2>
@@ -57,11 +71,22 @@ export default async function ContactPage() {
                   Appeler
                 </a>
               )}
+              {waHref && (
+                <a
+                  href={waHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-sm bg-[#25D366] px-6 py-3 text-xs font-semibold uppercase tracking-widest text-white hover:brightness-95"
+                >
+                  <SocialIcon platform="whatsapp" className="h-4 w-4" />
+                  Urgent ? WhatsApp
+                </a>
+              )}
             </div>
           </div>
         </div>
       </main>
-      <Footer brandName={settings.brandName} />
+      <Footer brandName={settings.brandName} socialLinks={settings.socialLinks} />
     </>
   );
 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDb } from "@/lib/mongoose";
-import { Order } from "@/lib/models";
+import { createOrder, updateOrder } from "@/lib/db";
 import { getStripe } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
@@ -9,7 +8,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Paiement non configuré — contactez l'administrateur" }, { status: 500 });
   }
 
-  await connectDb();
   const body = await req.json();
   const { client, email, phone, items, total, pickupDate, slot, mode, address, note } = body;
 
@@ -18,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 1. Create the order as "unpaid"
-  const order = await Order.create({
+  const order = await createOrder({
     client,
     email,
     phone,
@@ -56,7 +54,7 @@ export async function POST(req: NextRequest) {
     metadata: { orderId: String(order._id) },
   });
 
-  await Order.findByIdAndUpdate(order._id, { stripeSessionId: session.id });
+  await updateOrder(order._id, { stripeSessionId: session.id });
 
   return NextResponse.json({ url: session.url, orderId: String(order._id) });
 }

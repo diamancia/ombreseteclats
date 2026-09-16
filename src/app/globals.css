@@ -7,6 +7,7 @@
   --primary-dark: #7d3541;
   --accent: #f5e6e3;
   --muted: #faf0ec;
+  --rose-gold: #c9a08a;
 }
 
 @theme inline {
@@ -16,6 +17,7 @@
   --color-primary-dark: var(--primary-dark);
   --color-accent: var(--accent);
   --color-muted: var(--muted);
+  --color-rose-gold: var(--rose-gold);
   --font-sans: var(--font-inter);
   --font-serif: var(--font-playfair);
 }
@@ -29,4 +31,76 @@ body {
 .font-serif {
   font-family: var(--font-playfair), Georgia, serif;
   letter-spacing: 0.02em;
+}
+
+/* Bandeau défilant (annonces/promotions du header) — deux copies du contenu, on
+   translate de -50% pour boucler sans à-coup. */
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-track {
+  animation: ticker-scroll 28s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
+
+/* Avis clients (Google Business Profile) — palette scoped à la section, indépendante des
+   variables globales --background/--foreground (qui ne varient pas avec le thème sur ce
+   site) et branchée sur l'attribut data-theme posé par ThemeToggle.tsx (sombre = valeur par
+   défaut tant que l'utilisateur n'a pas basculé en clair, comme le reste du site). */
+.reviews-section {
+  --gr-bg: #131316;
+  --gr-card: #1a191c;
+  --gr-text: #ece9e3;
+  --gr-text-secondary: #aca9a2;
+  --gr-border: #2c2b2e;
+  --gr-accent: #d69a5c;
+}
+:root[data-theme="light"] .reviews-section {
+  --gr-bg: #f1eee9;
+  --gr-card: #fbfaf7;
+  --gr-text: #1e1f22;
+  --gr-text-secondary: #5a5d63;
+  --gr-border: #dad4c8;
+  --gr-accent: #b9793c;
+}
+
+@keyframes reviews-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.reviews-track {
+  animation: reviews-scroll 40s linear infinite;
+}
+.reviews-track:hover,
+.reviews-track:focus-within {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reviews-track {
+    animation: none;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .reviews-track-group:last-of-type {
+    display: none;
+  }
+  .reviews-viewport {
+    overflow: visible;
+  }
 }

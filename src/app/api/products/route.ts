@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDb } from "@/lib/mongoose";
-import { Product } from "@/lib/models";
-import { verifyAdmin } from "@/lib/auth";
+import { listProducts, createProduct } from "@/lib/db";
+import { verifyUser } from "@/lib/auth";
 
 export async function GET() {
-  await connectDb();
-  const products = await Product.find().populate("category").sort({ createdAt: -1 });
+  const products = await listProducts();
   return NextResponse.json(products);
 }
 
 export async function POST(req: NextRequest) {
-  if (!verifyAdmin(req)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  await connectDb();
+  if (!verifyUser(req, "produits")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   try {
     const body = await req.json();
-    const p = await Product.create(body);
+    const p = await createProduct(body);
     return NextResponse.json(p, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? "Erreur" }, { status: 400 });

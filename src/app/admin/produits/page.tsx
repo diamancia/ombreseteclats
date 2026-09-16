@@ -1,25 +1,33 @@
 "use client";
 import { useEffect, useState } from "react";
 import { adminFetch, uploadImage, IMAGE_PRESETS } from "@/lib/adminClient";
-import { Plus, Edit, Trash2, Upload, X } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, X, Share2, Loader2 } from "lucide-react";
 import { siteConfig } from "@/site.config";
+import ProductAttributesFields from "@/components/admin/ProductAttributesFields";
+import MultiPhotoImport from "@/components/admin/MultiPhotoImport";
+import { DEFAULT_METAL_TYPES, DEFAULT_GOLD_COLORS } from "@/lib/metals";
 
 const V1 = siteConfig.product.variant1;
-const V2 = siteConfig.product.variant2;
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>(null);
   const [editing, setEditing] = useState<any | null>(null);
+  const [importing, setImporting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const socialModuleEnabled = settings?.moduleFlags?.social_publish !== false;
 
   async function load() {
-    const [p, c] = await Promise.all([
+    const [p, c, s] = await Promise.all([
       fetch("/api/products", { cache: "no-store" }).then((r) => r.json()),
       fetch("/api/categories?all=true", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/settings", { cache: "no-store" }).then((r) => r.json()),
     ]);
     setProducts(p);
     setCategories(c);
+    setSettings(s);
     setLoading(false);
   }
   useEffect(() => {
@@ -32,6 +40,29 @@ export default function AdminProductsPage() {
     load();
   }
 
+  async function publishSocial(id: string) {
+    setPublishingId(id);
+    try {
+      await adminFetch(`/api/products/${id}/publish-social`, { method: "POST" });
+    } catch {
+      // L'échec est reflété par le statut "failed" renvoyé et rechargé ci-dessous ;
+      // pas besoin d'un second message d'erreur ici.
+    } finally {
+      setPublishingId(null);
+      load();
+    }
+  }
+
+  async function validate(id: string) {
+    await adminFetch(`/api/products/${id}`, { method: "PUT", body: JSON.stringify({ status: "available" }) });
+    // Publication auto sur les réseaux sociaux si le module est actif et le réglage l'autorise.
+    if (socialModuleEnabled && settings?.socialAutoPublish !== false) {
+      await publishSocial(id);
+    } else {
+      load();
+    }
+  }
+
   function newProduct() {
     return {
       name: "",
@@ -41,12 +72,14 @@ export default function AdminProductsPage() {
       imageUrl: "",
       images: [],
       category: "",
+      gender: "homme",
       delay: 2,
       shortDesc: "",
       longDesc: "",
       allergens: "",
       flavors: [],
       sizes: [],
+      customLength: { enabled: false, presets: [39, 42], minCm: 30, maxCm: 70 },
     };
   }
 
@@ -54,12 +87,22 @@ export default function AdminProductsPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="font-serif text-3xl">Produits</h1>
-        <button
-          onClick={() => setEditing(newProduct())}
-          className="flex items-center gap-2 rounded-sm bg-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--background)] hover:bg-[var(--primary-dark)]"
-        >
-          <Plus className="h-4 w-4" /> Nouveau
-        </button>
+        <div className="flex items-center gap-3">
+          {settings?.moduleFlags?.import_multiphotos !== false && (
+            <button
+              onClick={() => setImporting(true)}
+              className="flex items-center gap-2 rounded-sm border border-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]"
+            >
+              <Upload className="h-4 w-4" /> Ajout multi-photos
+            </button>
+          )}
+          <button
+            onClick={() => setEditing(newProduct())}
+            className="flex items-center gap-2 rounded-sm bg-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--background)] hover:bg-[var(--primary-dark)]"
+          >
+            <Plus className="h-4 w-4" /> Nouveau
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -74,6 +117,7 @@ export default function AdminProductsPage() {
                 <th className="px-4 py-3 text-right">Prix</th>
                 <th className="px-4 py-3 text-center">Délai</th>
                 <th className="px-4 py-3 text-center">Statut</th>
+                {socialModuleEnabled && <th className="px-4 py-3 text-center">Réseaux</th>}
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -90,7 +134,12 @@ export default function AdminProductsPage() {
                       )}
                       <div>
                         <p className="font-medium">{p.name}</p>
-                        {p.isNew && <span className="rounded bg-[var(--primary)] px-2 py-0.5 text-[9px] font-bold text-[var(--background)]">NEW</span>}
+                        <div className="flex gap-1.5">
+                          {p.isNew && <span className="rounded bg-[var(--primary)] px-2 py-0.5 text-[9px] font-bold text-[var(--background)]">NEW</span>}
+                          {p.aiGenerated?.description && (
+                            <span className="rounded bg-[var(--primary)]/10 px-2 py-0.5 text-[9px] font-bold text-[var(--primary)]">VIA IA</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -98,11 +147,56 @@ export default function AdminProductsPage() {
                   <td className="px-4 py-3 text-right font-semibold">{p.basePrice.toFixed(2)}€</td>
                   <td className="px-4 py-3 text-center text-xs text-gray-500">{p.delay || 2}h</td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] ${p.status === "available" ? "bg-green-100 text-green-700" : "bg-gray-50 text-gray-500"}`}>
-                      {p.status}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] ${
+                        p.status === "available"
+                          ? "bg-green-100 text-green-700"
+                          : p.status === "pending"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-gray-50 text-gray-500"
+                      }`}
+                    >
+                      {p.status === "pending" ? "à valider" : p.status}
                     </span>
                   </td>
+                  {socialModuleEnabled && (
+                    <td className="px-4 py-3 text-center">
+                      {publishingId === p._id ? (
+                        <Loader2 className="mx-auto h-3.5 w-3.5 animate-spin text-gray-400" />
+                      ) : p.socialPostStatus && p.socialPostStatus !== "none" ? (
+                        <span
+                          title={p.socialPostError || undefined}
+                          className={`rounded-full px-2 py-0.5 text-[10px] ${
+                            p.socialPostStatus === "published"
+                              ? "bg-green-100 text-green-700"
+                              : p.socialPostStatus === "failed"
+                              ? "bg-red-50 text-red-600"
+                              : "bg-gray-50 text-gray-500"
+                          }`}
+                        >
+                          {p.socialPostStatus === "published" ? "publié" : p.socialPostStatus === "failed" ? "échec" : "en attente"}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-gray-300">—</span>
+                      )}
+                    </td>
+                  )}
                   <td className="px-4 py-3 text-right">
+                    {p.status === "pending" && (
+                      <button onClick={() => validate(p._id)} className="mr-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--primary)] hover:underline">
+                        Valider
+                      </button>
+                    )}
+                    {socialModuleEnabled && (
+                      <button
+                        onClick={() => publishSocial(p._id)}
+                        disabled={publishingId === p._id}
+                        title="Publier sur Facebook / Instagram"
+                        className="mr-2 text-[var(--primary)] disabled:opacity-40"
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                    )}
                     <button onClick={() => setEditing({ ...p, category: p.category?._id || "" })} className="mr-2 text-[var(--primary)]">
                       <Edit className="h-4 w-4" />
                     </button>
@@ -117,13 +211,52 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {editing && <ProductModal initial={editing} categories={categories} onClose={() => setEditing(null)} onSaved={load} />}
+      {editing && (
+        <ProductModal
+          initial={editing}
+          categories={categories}
+          metalTypes={settings?.metalTypes || DEFAULT_METAL_TYPES}
+          goldColors={settings?.goldColors || DEFAULT_GOLD_COLORS}
+          onClose={() => setEditing(null)}
+          onSaved={load}
+        />
+      )}
+      {importing && (
+        <MultiPhotoImport
+          categories={categories}
+          metalTypes={settings?.metalTypes || DEFAULT_METAL_TYPES}
+          goldColors={settings?.goldColors || DEFAULT_GOLD_COLORS}
+          aiEnabled={settings?.moduleFlags?.ai_description !== false}
+          onClose={() => setImporting(false)}
+          onImported={load}
+        />
+      )}
     </div>
   );
 }
 
-function ProductModal({ initial, categories, onClose, onSaved }: { initial: any; categories: any[]; onClose: () => void; onSaved: () => void }) {
-  const [form, setForm] = useState({ ...initial, flavors: initial.flavors || [], sizes: initial.sizes || [], images: initial.images || [] });
+function ProductModal({
+  initial,
+  categories,
+  metalTypes,
+  goldColors,
+  onClose,
+  onSaved,
+}: {
+  initial: any;
+  categories: any[];
+  metalTypes: { key: string; label: string }[];
+  goldColors: { key: string; label: string; hex: string }[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [form, setForm] = useState({
+    ...initial,
+    flavors: initial.flavors || [],
+    sizes: initial.sizes || [],
+    images: initial.images || [],
+    customLength: initial.customLength || { enabled: false, presets: [39, 42], minCm: 30, maxCm: 70 },
+  });
   const [saving, setSaving] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,16 +328,6 @@ function ProductModal({ initial, categories, onClose, onSaved }: { initial: any;
     }
   }
 
-  function addSize() {
-    setForm({ ...form, sizes: [...form.sizes, { _id: Math.random().toString(36).slice(2), name: "", surcharge: 0 }] });
-  }
-  function updateSize(idx: number, patch: any) {
-    setForm({ ...form, sizes: form.sizes.map((s: any, i: number) => (i === idx ? { ...s, ...patch } : s)) });
-  }
-  function removeSize(idx: number) {
-    setForm({ ...form, sizes: form.sizes.filter((_: any, i: number) => i !== idx) });
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-8 shadow-xl">
@@ -252,7 +375,7 @@ function ProductModal({ initial, categories, onClose, onSaved }: { initial: any;
             <Field label={siteConfig.product.allergensLabel} value={form.allergens} onChange={(v) => setForm({ ...form, allergens: v })} />
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Statut</label>
               <select
@@ -263,6 +386,20 @@ function ProductModal({ initial, categories, onClose, onSaved }: { initial: any;
                 <option value="available">Disponible</option>
                 <option value="unavailable">Indisponible</option>
                 <option value="soon">Bientôt</option>
+                <option value="pending">À valider</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Collection</label>
+              <select
+                value={form.gender || "homme"}
+                onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
+              >
+                <option value="homme">Homme</option>
+                <option value="femme">Femme</option>
+                <option value="enfant">Enfant</option>
+                <option value="mixte">Mixte</option>
               </select>
             </div>
             <label className="flex items-center gap-2 pt-6">
@@ -381,40 +518,84 @@ function ProductModal({ initial, categories, onClose, onSaved }: { initial: any;
           </div>
           )}
 
-          {/* Variant 2 (sizes) */}
-          {V2.enabled && (
+          {/* Longueur de chaîne personnalisable */}
           <div className="rounded-xl border border-gray-200 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-wider">{V2.label}</h3>
-              <button type="button" onClick={addSize} className="flex items-center gap-1 text-xs text-[var(--primary)] hover:underline">
-                <Plus className="h-3 w-3" /> Ajouter {V2.labelSingular}
-              </button>
-            </div>
-            {form.sizes.length === 0 && <p className="text-xs text-gray-400">Aucun(e) {V2.labelSingular} — prix de base unique.</p>}
-            <div className="space-y-3">
-              {form.sizes.map((s: any, i: number) => (
-                <div key={s._id || i} className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+            <label className="mb-3 flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!form.customLength?.enabled}
+                onChange={(e) =>
+                  setForm({ ...form, customLength: { ...form.customLength, enabled: e.target.checked } })
+                }
+              />
+              <span className="text-sm font-semibold uppercase tracking-wider">Longueur personnalisable</span>
+            </label>
+            {form.customLength?.enabled && (
+              <div className="space-y-3">
+                <p className="text-xs text-gray-400">
+                  Le client choisit une des longueurs courantes ou tape la longueur voulue (sur mesure). Le
+                  surcoût lié à la longueur est calculé automatiquement (réglage global dans Paramètres) et
+                  n&apos;est jamais affiché séparément au client.
+                </p>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider">
+                    Longueurs courantes proposées (cm)
+                  </label>
                   <input
-                    placeholder={V2.placeholder}
-                    value={s.name}
-                    onChange={(e) => updateSize(i, { name: e.target.value })}
-                    className="flex-1 rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
+                    value={(form.customLength.presets || []).join(", ")}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        customLength: {
+                          ...form.customLength,
+                          presets: e.target.value
+                            .split(",")
+                            .map((v) => parseFloat(v.trim()))
+                            .filter((n) => !isNaN(n)),
+                        },
+                      })
+                    }
+                    placeholder="39, 42"
+                    className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
                   />
-                  <input
-                    type="number"
-                    placeholder="+€"
-                    value={s.surcharge || 0}
-                    onChange={(e) => updateSize(i, { surcharge: parseFloat(e.target.value) || 0 })}
-                    className="w-20 rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
-                  />
-                  <button type="button" onClick={() => removeSize(i)} className="text-red-600">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
                 </div>
-              ))}
-            </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider">Mini (cm)</label>
+                    <input
+                      type="number"
+                      value={form.customLength.minCm ?? 30}
+                      onChange={(e) =>
+                        setForm({ ...form, customLength: { ...form.customLength, minCm: parseFloat(e.target.value) || 0 } })
+                      }
+                      className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider">Maxi (cm)</label>
+                    <input
+                      type="number"
+                      value={form.customLength.maxCm ?? 70}
+                      onChange={(e) =>
+                        setForm({ ...form, customLength: { ...form.customLength, maxCm: parseFloat(e.target.value) || 0 } })
+                      }
+                      className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          )}
+
+          <div className="rounded-xl border border-gray-200 p-4">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider">Attributs de la pièce</h3>
+            <ProductAttributesFields
+              value={{ jewelryType: form.jewelryType, dimensionValue: form.dimensionValue, stone: form.stone, metal: form.metal, goldColor: form.goldColor }}
+              onChange={(patch) => setForm({ ...form, ...patch })}
+              metalTypes={metalTypes}
+              goldColors={goldColors}
+            />
+          </div>
         </div>
 
         {error && <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}

@@ -5,3 +5,4 @@ export const storageKey = (suffix: string) => `${siteConfig.brand.storagePrefix}
 export const TOKEN_KEY = storageKey("token");
 export const CART_KEY = storageKey("cart");
 export const COOKIE_KEY = storageKey("cookie_consent");
+export const USER_KEY = storageKey("user");

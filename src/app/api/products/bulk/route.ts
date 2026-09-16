@@ -1,0 +1,20 @@
+import { NextRequest, NextResponse } from "next/server";
+import { bulkInsertProducts } from "@/lib/db";
+import { verifyUser } from "@/lib/auth";
+
+export async function POST(req: NextRequest) {
+  if (!verifyUser(req, "produits")) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  try {
+    const body = await req.json();
+    const items = Array.isArray(body?.items) ? body.items : [];
+    if (items.length === 0) {
+      return NextResponse.json({ error: "Aucun produit à importer" }, { status: 400 });
+    }
+    const payload = items.map((item: any) => ({ ...item, status: "pending" }));
+    const { created, errors } = await bulkInsertProducts(payload);
+    if (errors.length) console.error("bulk product insert errors:", errors);
+    return NextResponse.json(created, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message ?? "Erreur" }, { status: 400 });
+  }
+}

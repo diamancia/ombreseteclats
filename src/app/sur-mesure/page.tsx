@@ -2,8 +2,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
 import CustomOrderForm from "@/components/CustomOrderForm";
-import { connectDb } from "@/lib/mongoose";
-import { Settings } from "@/lib/models";
+import ContactButton from "@/components/ContactButton";
+import { getSettings } from "@/lib/db";
 import { siteConfig } from "@/site.config";
 import { notFound } from "next/navigation";
 
@@ -11,13 +11,17 @@ export const dynamic = "force-dynamic";
 
 export default async function SurMesurePage() {
   if (!siteConfig.features.customOrders) notFound();
-  await connectDb();
-  const s = await Settings.findOne().lean();
-  const settings: any = JSON.parse(JSON.stringify(s || {}));
+  const settings: any = (await getSettings()) || {};
 
   return (
     <>
-      <Navbar brandName={settings.brandName} />
+      <Navbar
+        brandName={settings.brandName}
+        navLinks={settings.navLinks}
+        announcements={settings.announcements}
+        socialLinks={settings.socialLinks}
+        address={settings.address}
+      />
       <Cart />
       <main className="min-h-screen bg-[var(--background)] py-16">
         <div className="mx-auto max-w-3xl px-6">
@@ -35,7 +39,8 @@ export default async function SurMesurePage() {
           <CustomOrderForm settings={settings} />
         </div>
       </main>
-      <Footer brandName={settings.brandName} />
+      <Footer brandName={settings.brandName} navLinks={settings.navLinks} socialLinks={settings.socialLinks} email={settings.email} phone={settings.phone} address={settings.address} />
+      {siteConfig.features.whatsappButton && <ContactButton phone={settings.phone} />}
     </>
   );
 }
