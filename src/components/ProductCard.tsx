@@ -1,6 +1,6 @@
 import Link from "next/link";
 import AddToCartButton from "./AddToCartButton";
-import ProductBadges from "./ProductBadges";
+import ProductBadges, { ProductSecondaryBadge } from "./ProductBadges";
 import ProductPrice from "./ProductPrice";
 
 export default function ProductCard({ product }: { product: any }) {
@@ -18,6 +18,7 @@ export default function ProductCard({ product }: { product: any }) {
         </div>
       </Link>
       <div className="p-3">
+        <ProductSecondaryBadge product={product} className="mb-1.5" />
         <Link href={`/produit/${product._id}`}>
           <h3 className="line-clamp-2 text-xs font-medium hover:text-[var(--primary)]">{product.name}</h3>
         </Link>

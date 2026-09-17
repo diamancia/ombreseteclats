@@ -102,3 +102,21 @@ export async function bulkInsertOrders(items: Record<string, any>[]): Promise<Or
   const rows = throwIfError(await db().from("orders").insert(items.map(toDbOrder)).select("*"));
   return (rows || []).map(fromDbOrder);
 }
+
+// Classement des produits les plus vendus (quantité cumulée, commandes payées) — pas de vue
+// SQL dédiée : le volume d'une bijouterie reste largement gérable en agrégeant côté Node.
+export async function getBestSellerProductIds(limit = 12): Promise<string[]> {
+  const { data, error } = await db().from("orders").select("items").eq("payment_status", "paid");
+  if (error) throw error;
+  const totals = new Map<string, number>();
+  for (const row of data || []) {
+    for (const item of row.items || []) {
+      if (!item.productId) continue;
+      totals.set(item.productId, (totals.get(item.productId) || 0) + (Number(item.quantity) || 0));
+    }
+  }
+  return Array.from(totals.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([id]) => id);
+}

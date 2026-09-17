@@ -6,7 +6,7 @@ import Cart from "@/components/Cart";
 import ProductOrderForm from "@/components/ProductOrderForm";
 import ProductGallery from "@/components/ProductGallery";
 import ProductCard from "@/components/ProductCard";
-import ProductBadges from "@/components/ProductBadges";
+import ProductBadges, { ProductSecondaryBadge } from "@/components/ProductBadges";
 import ProductPrice from "@/components/ProductPrice";
 import ContactButton from "@/components/ContactButton";
 import { ArrowLeft } from "lucide-react";
@@ -50,6 +50,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         announcements={(settings as any)?.announcements}
         socialLinks={(settings as any)?.socialLinks}
         address={(settings as any)?.address}
+        categoryBubbles={(settings as any)?.categoryBubbles}
       />
       <Cart />
       <main className="min-h-screen bg-[var(--background)] py-10">
@@ -63,6 +64,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               {product.category && (
                 <p className="mb-2 text-xs uppercase tracking-widest text-[var(--primary)]">{product.category.name}</p>
               )}
+              <ProductSecondaryBadge product={product} className="mb-2" />
               <h1 className="font-serif text-4xl">{product.name}</h1>
               {product.shortDesc && <p className="mt-3 text-[var(--foreground)]/70">{product.shortDesc}</p>}
               <ProductPrice product={product} className="mt-6 block text-3xl font-semibold text-[var(--primary)]" />

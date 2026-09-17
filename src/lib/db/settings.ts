@@ -28,6 +28,7 @@ export type Settings = {
   navLinks: { href: string; label: string }[];
   socialLinks: { platform: string; url: string; active?: boolean; showInHeader?: boolean }[];
   announcements: any[];
+  categoryBubbles: { label: string; href: string; imageUrl?: string }[];
   bannerEnabled: boolean;
   bannerType: "photo" | "video";
   bannerSize: "compacte" | "standard" | "pleine";
@@ -66,6 +67,7 @@ function fromDbSettings(row: any): Settings {
     navLinks: row.nav_links || [],
     socialLinks: row.social_links || [],
     announcements: row.announcements || [],
+    categoryBubbles: row.category_bubbles || [],
     bannerEnabled: row.banner_enabled,
     bannerType: row.banner_type,
     bannerSize: row.banner_size,
@@ -96,6 +98,7 @@ const FIELD_MAP: Record<string, string> = {
   socialAutoPublish: "social_auto_publish",
   navLinks: "nav_links",
   socialLinks: "social_links",
+  categoryBubbles: "category_bubbles",
   bannerEnabled: "banner_enabled",
   bannerType: "banner_type",
   bannerSize: "banner_size",

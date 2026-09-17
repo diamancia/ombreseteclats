@@ -118,11 +118,11 @@ export const siteConfig: SiteConfig = {
   },
 
   hero: {
-    defaultTitle: "L'éclat discret, affirmé",
+    defaultTitle: "UNE PIÈCE UNIQUE ? NOUS LA FAÇONNONS.",
     defaultSubtitle:
-      "Bagues, chevalières et gourmettes en argent massif 925 — pièces façonnées à la main dans notre atelier.",
+      "Gravure d'initiales, chevalière aux armoiries, alliance sur-mesure… Décrivez votre projet, nous vous proposons un devis sous 48h.",
     defaultImageUrl:
-      "https://images.unsplash.com/photo-1543294001-f7cd5d7fb516?w=1600&auto=format&fit=crop&q=85",
+      "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=1400&auto=format&fit=crop&q=85",
   },
 
   contact: {

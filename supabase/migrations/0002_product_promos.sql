@@ -13,3 +13,6 @@ alter table products add column if not exists promo_ends_at timestamptz;
 alter table products drop constraint if exists products_status_check;
 alter table products add constraint products_status_check
   check (status in ('available', 'unavailable', 'soon', 'pending', 'on_order'));
+
+-- Bulles catégories admin-éditables, affichées sous le header (accueil).
+alter table settings add column if not exists category_bubbles jsonb not null default '[]';

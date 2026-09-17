@@ -1,5 +1,6 @@
 import { db, throwIfError } from "./client";
 import { fromDbCategory, type Category } from "./categories";
+import { getBestSellerProductIds } from "./orders";
 export { effectivePrice } from "@/lib/pricing";
 
 // Les fonctions ci-dessous renvoient des objets façonnés exactement comme le faisait
@@ -133,6 +134,18 @@ export async function listProducts(opts: {
   if (opts.limit) q = q.limit(opts.limit);
   const rows = throwIfError(await q);
   return (rows || []).map(fromDbProduct);
+}
+
+// Produits les plus vendus (commandes payées, quantité cumulée). Sans historique de vente
+// (nouvelle boutique), repli sur les produits les plus récents pour ne jamais afficher une
+// section vide.
+export async function listBestSellerProducts(limit = 12): Promise<Product[]> {
+  const ids = await getBestSellerProductIds(limit);
+  if (ids.length === 0) return listProducts({ statusNot: "unavailable", limit });
+
+  const rows = throwIfError(await db().from("products").select(SELECT_WITH_CATEGORY).in("id", ids));
+  const byId = new Map((rows || []).map((row: any) => [row.id, fromDbProduct(row)]));
+  return ids.map((id) => byId.get(id)).filter((p): p is Product => !!p);
 }
 
 export async function getProductById(id: string): Promise<Product | null> {

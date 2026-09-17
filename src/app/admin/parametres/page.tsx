@@ -115,6 +115,18 @@ export default function AdminSettingsPage() {
           )}
         </Card>
 
+        <Card title="Bulles catégories (sous le header)">
+          <p className="text-xs text-gray-400">
+            Défilent en boucle juste sous le header, sur tout le site. Chacune renvoie vers une
+            page (catégorie, best-sellers, nouveautés…) au clic. Ajoute, retire ou réordonne
+            librement — laisse la liste vide pour masquer complètement cette rangée.
+          </p>
+          <CategoryBubblesEditor
+            value={settings.categoryBubbles || []}
+            onChange={(v) => setSettings({ ...settings, categoryBubbles: v })}
+          />
+        </Card>
+
         <Card title="Bandeau défilant (annonces & promotions)">
           <p className="text-xs text-gray-400">
             Défile en boucle tout en haut du site. Ajoute une info, une annonce ou une promotion ;
@@ -686,6 +698,85 @@ function SocialLinksEditor({ value, onChange }: { value: SocialLink[]; onChange:
         className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
       >
         <Plus className="h-3 w-3" /> Ajouter un réseau social
+      </button>
+    </div>
+  );
+}
+
+type CategoryBubble = { label: string; href: string; imageUrl?: string };
+
+function CategoryBubblesEditor({ value, onChange }: { value: CategoryBubble[]; onChange: (v: CategoryBubble[]) => void }) {
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
+  function update(idx: number, patch: Partial<CategoryBubble>) {
+    onChange(value.map((b, i) => (i === idx ? { ...b, ...patch } : b)));
+  }
+  function remove(idx: number) {
+    onChange(value.filter((_, i) => i !== idx));
+  }
+  function move(idx: number, dir: -1 | 1) {
+    const target = idx + dir;
+    if (target < 0 || target >= value.length) return;
+    const next = [...value];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onChange(next);
+  }
+  async function handleImage(idx: number, file: File) {
+    setUploadingIdx(idx);
+    try {
+      const url = await uploadImage(file, IMAGE_PRESETS.thumbnail);
+      update(idx, { imageUrl: url });
+    } finally {
+      setUploadingIdx(null);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {value.map((b, i) => (
+        <div key={i} className="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
+          <div className="flex flex-col">
+            <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">▲</button>
+            <button type="button" onClick={() => move(i, 1)} disabled={i === value.length - 1} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">▼</button>
+          </div>
+          <label className="relative flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-gray-200">
+            {b.imageUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={b.imageUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <Upload className="h-3.5 w-3.5 text-gray-400" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && handleImage(i, e.target.files[0])}
+            />
+          </label>
+          {uploadingIdx === i && <span className="text-[10px] text-gray-400">Upload…</span>}
+          <input
+            placeholder="Libellé (ex: Bagues)"
+            value={b.label}
+            onChange={(e) => update(i, { label: e.target.value })}
+            className="w-32 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+          />
+          <input
+            placeholder="Lien (ex: /catalogue?cat=...)"
+            value={b.href}
+            onChange={(e) => update(i, { href: e.target.value })}
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+          />
+          <button type="button" onClick={() => remove(i)} className="text-red-600">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...value, { label: "", href: "/catalogue" }])}
+        className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
+      >
+        <Plus className="h-3 w-3" /> Ajouter une bulle
       </button>
     </div>
   );

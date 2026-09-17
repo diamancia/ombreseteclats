@@ -33,6 +33,7 @@ export default async function PromoPage({ params }: { params: Promise<{ slug: st
         announcements={settings.announcements}
         socialLinks={settings.socialLinks}
         address={settings.address}
+        categoryBubbles={settings.categoryBubbles}
       />
       <Cart />
       <main className="bg-black text-[#f5f1e8]">

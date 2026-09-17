@@ -61,7 +61,7 @@ export default function TickerBanner({
   const items: Announcement[] = active.length > 0 ? active : [{ text: fallbackText }];
 
   return (
-    <div className="overflow-hidden bg-[var(--primary)] py-2.5 text-[10px] font-semibold uppercase tracking-[0.35em] text-black">
+    <div className="overflow-hidden bg-[var(--primary)] py-3 text-[10px] font-semibold uppercase tracking-[0.35em] text-black">
       <div className="ticker-track flex w-max">
         {[0, 1].map((rep) => (
           <div key={rep} className="flex flex-none items-center whitespace-nowrap">

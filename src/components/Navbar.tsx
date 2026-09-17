@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { siteConfig } from "@/site.config";
 import ThemeToggle from "@/components/ThemeToggle";
 import TickerBanner, { Announcement } from "@/components/TickerBanner";
+import CategoryBubbles, { CategoryBubble } from "@/components/CategoryBubbles";
 import { SocialIcon, SOCIAL_BRAND_COLORS, normalizePlatformKey } from "@/components/SocialIcon";
 import { buildMapsUrl } from "@/lib/maps";
 
@@ -30,12 +31,14 @@ export default function Navbar({
   announcements = [],
   socialLinks = [],
   address,
+  categoryBubbles = [],
 }: {
   brandName?: string;
   navLinks?: { href: string; label: string }[];
   announcements?: Announcement[];
   socialLinks?: HeaderSocialLink[];
   address?: string;
+  categoryBubbles?: CategoryBubble[];
 }) {
   const { cartCount, setCartOpen } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -169,6 +172,8 @@ export default function Navbar({
           </div>
         </div>
       </header>
+
+      <CategoryBubbles bubbles={categoryBubbles} />
 
       {/* Rendu en dehors du <header> : un ancêtre avec backdrop-blur/filter crée un
           "containing block" pour position:fixed, ce qui cassait la couverture plein écran

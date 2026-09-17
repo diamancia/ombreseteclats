@@ -19,6 +19,7 @@ export default async function CommanderPage() {
         announcements={settings.announcements}
         socialLinks={settings.socialLinks}
         address={settings.address}
+        categoryBubbles={settings.categoryBubbles}
       />
       <Cart />
       <main className="min-h-screen bg-[var(--background)] py-16">

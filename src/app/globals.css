@@ -55,6 +55,36 @@ body {
   }
 }
 
+/* Bulles catégories défilantes sous le header (Navbar.tsx / CategoryBubbles.tsx) — même
+   technique de boucle sans à-coup que reviews-track : deux groupes identiques translatés de
+   -50%. */
+@keyframes bubbles-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.bubbles-track {
+  animation: bubbles-scroll 32s linear infinite;
+}
+.bubbles-track:hover,
+.bubbles-track:focus-within {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bubbles-track {
+    animation: none;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: center;
+  }
+  .bubbles-track-group:last-of-type {
+    display: none;
+  }
+}
+
 /* Avis clients (Google Business Profile) — palette scoped à la section, indépendante des
    variables globales --background/--foreground (qui ne varient pas avec le thème sur ce
    site) et branchée sur l'attribut data-theme posé par ThemeToggle.tsx (sombre = valeur par
