@@ -55,7 +55,7 @@ export default async function HomePage() {
         {/* Hero — fond noir fixe dans les deux thèmes (identité de marque), texte donc en
             couleur fixe plutôt que --foreground qui, lui, bascule avec le mode clair/sombre. */}
         <section className="relative overflow-hidden bg-black text-[#f5f1e8]">
-          <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:gap-16 lg:py-28">
+          <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-12 lg:grid-cols-2 lg:gap-16 lg:py-16">
             {/* Texte */}
             <div className="flex flex-col">
               <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.4em] text-[var(--primary)]">
@@ -116,7 +116,7 @@ export default async function HomePage() {
 
         {/* Nouveautés */}
         {displayedNew.length > 0 && (
-          <section className="bg-[var(--muted)] py-20">
+          <section className="bg-[var(--muted)] py-12">
             <div className="mx-auto max-w-7xl px-6">
               <SectionHeader title="NOUVEAUTÉS" />
               <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-5">
@@ -131,12 +131,9 @@ export default async function HomePage() {
         {/* À propos — fusionnée depuis l'ancienne page /a-propos (supprimée : éviter le
             contenu dupliqué sur deux pages, cf. recommandations SEO). Section secondaire
             (H2), volontairement compacte pour ne pas concurrencer les produits. */}
-        <section id="a-propos" className="scroll-mt-24 border-t border-[var(--accent)] py-20">
+        <section id="a-propos" className="scroll-mt-24 border-t border-[var(--accent)] py-12">
           <div className="mx-auto max-w-5xl px-6">
             <div className="mb-10 flex flex-col items-center text-center">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--primary)]">
-                Notre histoire
-              </p>
               <h2 className="font-serif text-3xl tracking-wider">À PROPOS DE {brandName.toUpperCase()}</h2>
               <div className="mt-3 h-px w-16 bg-[var(--primary)]" />
             </div>

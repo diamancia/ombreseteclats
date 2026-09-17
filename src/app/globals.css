@@ -55,31 +55,18 @@ body {
   }
 }
 
-/* Bulles catégories défilantes sous le header (Navbar.tsx / CategoryBubbles.tsx) — même
-   technique de boucle sans à-coup que reviews-track : deux groupes identiques translatés de
-   -50%. */
-@keyframes bubbles-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
+/* Bulles catégories sous le header (Navbar.tsx / CategoryBubbles.tsx) — défilement auto
+   piloté en JS (scrollLeft), pour rester compatible avec le scroll manuel (glisser à la
+   souris, swipe tactile, molette/trackpad natifs). Scrollbar masquée pour garder l'apparence
+   d'un bandeau, la barre native reste fonctionnelle au clavier/à la souris. */
 .bubbles-track {
-  animation: bubbles-scroll 32s linear infinite;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.bubbles-track:hover,
-.bubbles-track:focus-within {
-  animation-play-state: paused;
+.bubbles-track::-webkit-scrollbar {
+  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .bubbles-track {
-    animation: none;
-    flex-wrap: wrap;
-    width: 100%;
-    justify-content: center;
-  }
   .bubbles-track-group:last-of-type {
     display: none;
   }

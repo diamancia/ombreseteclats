@@ -68,7 +68,7 @@ export default async function GoogleReviews() {
       className="reviews-section border-t"
       style={{ background: "var(--gr-bg)", borderColor: "var(--gr-border)" }}
     >
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <div className="mb-8 flex flex-col items-center gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
           <div>
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--gr-accent)" }}>
