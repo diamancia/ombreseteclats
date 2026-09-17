@@ -85,6 +85,7 @@ export default function AdminProductsPage() {
       stock: 0,
       shortDesc: "",
       longDesc: "",
+      videoUrl: "",
       allergens: "",
       isPromo: false,
       discountPct: 0,
@@ -206,7 +207,7 @@ export default function AdminProductsPage() {
                       <button
                         onClick={() => publishSocial(p._id)}
                         disabled={publishingId === p._id}
-                        title="Publier sur Facebook / Instagram"
+                        title="Publier sur Facebook / Instagram / Pinterest"
                         className="mr-2 text-[var(--primary)] disabled:opacity-40"
                       >
                         <Share2 className="h-4 w-4" />
@@ -368,6 +369,12 @@ function ProductModal({
               className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
             />
           </div>
+
+          <Field
+            label="Vidéo (lien YouTube ou fichier vidéo direct)"
+            value={form.videoUrl}
+            onChange={(v) => setForm({ ...form, videoUrl: v })}
+          />
 
           <div className="grid grid-cols-3 gap-4">
             <Field type="number" label="Prix de base (€) *" value={form.basePrice} onChange={(v) => setForm({ ...form, basePrice: parseFloat(v) || 0 })} />

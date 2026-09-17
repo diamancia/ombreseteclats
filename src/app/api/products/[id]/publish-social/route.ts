@@ -13,14 +13,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Ce produit n'a pas de photo principale" }, { status: 400 });
     }
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
     const result = await publishProductToSocial({
       imageUrl: product.imageUrl,
       name: product.name,
       longDesc: (product.longDesc || product.shortDesc) ?? undefined,
       hashtags: product.aiGenerated?.hashtags,
+      productUrl: siteUrl ? `${siteUrl}/produit/${id}` : undefined,
     });
 
-    const published = !!(result.facebookPostId || result.instagramPostId);
+    const published = !!(result.facebookPostId || result.instagramPostId || result.pinterestPinId);
     const socialPostStatus = published ? "published" : "failed";
     const updated = await updateProduct(id, {
       socialPostStatus,
@@ -28,6 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       socialPostIds: {
         facebook: result.facebookPostId || product.socialPostIds?.facebook,
         instagram: result.instagramPostId || product.socialPostIds?.instagram,
+        pinterest: result.pinterestPinId || product.socialPostIds?.pinterest,
       },
       socialPostError: result.errors.length ? result.errors.join(" · ") : undefined,
     });
@@ -36,6 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       status: updated.socialPostStatus,
       facebookPostId: result.facebookPostId,
       instagramPostId: result.instagramPostId,
+      pinterestPinId: result.pinterestPinId,
       errors: result.errors,
     });
   } catch (err: any) {

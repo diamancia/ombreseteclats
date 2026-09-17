@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
 import ProductOrderForm from "@/components/ProductOrderForm";
 import ProductGallery from "@/components/ProductGallery";
+import ProductVideo from "@/components/ProductVideo";
 import ProductCard from "@/components/ProductCard";
 import ProductBadges, { ProductSecondaryBadge } from "@/components/ProductBadges";
 import ProductPrice from "@/components/ProductPrice";
@@ -59,7 +60,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             <ArrowLeft className="h-4 w-4" /> Retour à la boutique
           </Link>
           <div className="grid gap-10 md:grid-cols-2">
-            <ProductGallery images={galleryImages} alt={product.name} badges={<ProductBadges product={product} />} />
+            <div>
+              <ProductGallery images={galleryImages} alt={product.name} badges={<ProductBadges product={product} />} />
+              <ProductVideo url={product.videoUrl} />
+            </div>
             <div>
               {product.category && (
                 <p className="mb-2 text-xs uppercase tracking-widest text-[var(--primary)]">{product.category.name}</p>

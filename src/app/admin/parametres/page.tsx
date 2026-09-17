@@ -269,7 +269,7 @@ export default function AdminSettingsPage() {
               checked={settings.socialAutoPublish !== false}
               onChange={(e) => setSettings({ ...settings, socialAutoPublish: e.target.checked })}
             />
-            <span className="text-sm">Publier automatiquement un produit validé sur Facebook / Instagram</span>
+            <span className="text-sm">Publier automatiquement un produit validé sur Facebook / Instagram / Pinterest</span>
           </label>
           <p className="text-xs text-gray-400">
             Le bouton « Publier » reste toujours disponible sur chaque produit pour republier ou forcer une publication manuelle, même en mode automatique.

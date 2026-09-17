@@ -6,11 +6,13 @@ export type SocialPublishInput = {
   name: string;
   longDesc?: string;
   hashtags?: string[];
+  productUrl?: string;
 };
 
 export type SocialPublishResult = {
   facebookPostId?: string;
   instagramPostId?: string;
+  pinterestPinId?: string;
   errors: string[];
 };
 
@@ -60,20 +62,46 @@ async function publishToInstagram(imageUrl: string, caption: string): Promise<st
   return published.id;
 }
 
+async function publishToPinterest(imageUrl: string, title: string, description: string, link?: string): Promise<string> {
+  const boardId = process.env.PINTEREST_BOARD_ID;
+  const token = process.env.PINTEREST_ACCESS_TOKEN;
+  if (!boardId || !token) {
+    throw new Error("Configuration Pinterest manquante (PINTEREST_BOARD_ID / PINTEREST_ACCESS_TOKEN)");
+  }
+  const res = await fetch("https://api.pinterest.com/v5/pins", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      board_id: boardId,
+      media_source: { source_type: "image_url", url: imageUrl },
+      title,
+      description,
+      ...(link ? { link } : {}),
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || `Erreur Pinterest API (${res.status})`);
+  }
+  return data.id;
+}
+
 /**
- * Publie une fiche produit sur Facebook et Instagram en parallèle. Chaque canal est tenté
- * indépendamment : l'échec de l'un n'empêche pas l'autre. Le résultat est "réussi" dès qu'au
- * moins un canal a publié — les erreurs individuelles sont remontées pour affichage admin.
+ * Publie une fiche produit sur Facebook, Instagram et Pinterest en parallèle. Chaque canal est
+ * tenté indépendamment : l'échec de l'un n'empêche pas les autres. Le résultat est "réussi" dès
+ * qu'au moins un canal a publié — les erreurs individuelles sont remontées pour affichage admin.
  */
 export async function publishProductToSocial(input: SocialPublishInput): Promise<SocialPublishResult> {
   const caption = buildCaption(input);
   const errors: string[] = [];
   let facebookPostId: string | undefined;
   let instagramPostId: string | undefined;
+  let pinterestPinId: string | undefined;
 
-  const [fb, ig] = await Promise.allSettled([
+  const [fb, ig, pin] = await Promise.allSettled([
     publishToFacebookPage(input.imageUrl, caption),
     publishToInstagram(input.imageUrl, caption),
+    publishToPinterest(input.imageUrl, input.name, caption, input.productUrl),
   ]);
 
   if (fb.status === "fulfilled") facebookPostId = fb.value;
@@ -82,5 +110,8 @@ export async function publishProductToSocial(input: SocialPublishInput): Promise
   if (ig.status === "fulfilled") instagramPostId = ig.value;
   else errors.push(`Instagram : ${ig.reason?.message || ig.reason}`);
 
-  return { facebookPostId, instagramPostId, errors };
+  if (pin.status === "fulfilled") pinterestPinId = pin.value;
+  else errors.push(`Pinterest : ${pin.reason?.message || pin.reason}`);
+
+  return { facebookPostId, instagramPostId, pinterestPinId, errors };
 }

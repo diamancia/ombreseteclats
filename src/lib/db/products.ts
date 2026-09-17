@@ -32,6 +32,7 @@ export type Product = {
   metal?: string | null;
   goldColor?: string | null;
   metalCustom?: string | null;
+  videoUrl?: string | null;
   isPromo: boolean;
   discountPct: number;
   isBlackFriday: boolean;
@@ -39,7 +40,7 @@ export type Product = {
   aiGenerated: { description: boolean; hashtags: string[] };
   socialPostStatus: "none" | "pending" | "published" | "failed";
   socialPostedAt?: string | null;
-  socialPostIds: { facebook?: string; instagram?: string };
+  socialPostIds: { facebook?: string; instagram?: string; pinterest?: string };
   socialPostError?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -73,6 +74,7 @@ function fromDbProduct(row: any): Product {
     metal: row.metal,
     goldColor: row.gold_color,
     metalCustom: row.metal_custom,
+    videoUrl: row.video_url,
     isPromo: row.is_promo ?? false,
     discountPct: row.discount_pct ?? 0,
     isBlackFriday: row.is_blackfriday ?? false,
@@ -102,6 +104,7 @@ const FIELD_MAP: Record<string, string> = {
   dimensionValue: "dimension_value",
   goldColor: "gold_color",
   metalCustom: "metal_custom",
+  videoUrl: "video_url",
   isPromo: "is_promo",
   discountPct: "discount_pct",
   isBlackFriday: "is_blackfriday",
