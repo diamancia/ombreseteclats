@@ -296,6 +296,7 @@ function ProductModal({
         category: form.category || null,
         flavors: cleanFlavors,
         sizes: cleanSizes,
+        discountPct: form.discountPct === "" ? 0 : form.discountPct,
       };
       if (form._id) {
         await adminFetch(`/api/products/${form._id}`, { method: "PUT", body: JSON.stringify(payload) });
@@ -449,8 +450,9 @@ function ProductModal({
                   type="number"
                   min={0}
                   max={100}
-                  value={form.discountPct || 0}
-                  onChange={(e) => setForm({ ...form, discountPct: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) })}
+                  value={form.discountPct || ""}
+                  placeholder="%"
+                  onChange={(e) => setForm({ ...form, discountPct: e.target.value === "" ? "" : Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) })}
                   onFocus={(e) => e.currentTarget.select()}
                   className="w-20 rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
                 />
