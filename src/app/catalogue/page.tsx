@@ -261,7 +261,7 @@ export default async function CataloguePage({
           {filtered.length === 0 ? (
             <p className="py-20 text-center text-[var(--foreground)]/60">Aucun produit dans cette catégorie</p>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {filtered.map((p: any) => (
                 <article key={p._id} className="group relative overflow-hidden rounded-lg bg-[var(--muted)] shadow-sm hover:shadow-lg">
                   <ProductBadges product={p} />
