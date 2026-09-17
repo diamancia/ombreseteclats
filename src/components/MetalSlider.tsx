@@ -4,7 +4,11 @@ import { useState } from "react";
 
 // Couleur de piste par métal — dégradé visuel demandé : or jaune -> gris/rose -> argenté -> perle.
 const METAL_SWATCH: Record<string, string> = {
+  or9: "#D9B65C",
+  or14: "#E0BE63",
   or: "#E8C46B",
+  or22: "#EFCD79",
+  or24: "#F4D485",
   argent: "#C7CCD1",
   perles: "#F3ECE3",
 };

@@ -297,6 +297,8 @@ function ProductModal({
         flavors: cleanFlavors,
         sizes: cleanSizes,
         discountPct: form.discountPct === "" ? 0 : form.discountPct,
+        delay: form.delay === "" ? 2 : form.delay,
+        stock: form.stock === "" ? 0 : form.stock,
       };
       if (form._id) {
         await adminFetch(`/api/products/${form._id}`, { method: "PUT", body: JSON.stringify(payload) });
@@ -369,7 +371,7 @@ function ProductModal({
 
           <div className="grid grid-cols-3 gap-4">
             <Field type="number" label="Prix de base (€) *" value={form.basePrice} onChange={(v) => setForm({ ...form, basePrice: parseFloat(v) || 0 })} />
-            <Field type="number" label={`${siteConfig.product.delayLabel} (jours)`} value={form.delay || 2} onChange={(v) => setForm({ ...form, delay: parseInt(v) || 2 })} />
+            <Field type="number" label={`${siteConfig.product.delayLabel} (jours)`} value={form.delay || ""} onChange={(v) => setForm({ ...form, delay: v === "" ? "" : parseInt(v) || 2 })} />
             <div>
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Catégorie</label>
               <select
@@ -395,8 +397,8 @@ function ProductModal({
             <Field
               type="number"
               label="Quantité en stock"
-              value={form.stock ?? 0}
-              onChange={(v) => setForm({ ...form, stock: parseInt(v) || 0 })}
+              value={form.stock || ""}
+              onChange={(v) => setForm({ ...form, stock: v === "" ? "" : parseInt(v) || 0 })}
             />
             <div>
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Statut</label>

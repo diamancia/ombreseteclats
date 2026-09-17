@@ -6,11 +6,16 @@
 export type MetalType = { key: string; label: string };
 export type GoldColor = { key: string; label: string; hex: string };
 
-// Par défaut, seuls les deux titrages réellement utilisés par la boutique — "Perles" reste
-// ajoutable manuellement depuis Paramètres > Métaux si besoin un jour (clés inchangées, donc
-// aucune migration de données pour les produits existants).
+// Titrages d'or homologués les plus courants en bijouterie (9, 14, 18, 22, 24 carats) + argent
+// 925, plutôt que de devoir taper chaque titrage à la main. La clé "or" (= 18 carats) reste
+// inchangée pour ne rien casser sur les produits déjà en base ; les autres sont de nouvelles
+// entrées. "Perles" reste ajoutable manuellement depuis Paramètres > Métaux si besoin un jour.
 export const DEFAULT_METAL_TYPES: MetalType[] = [
+  { key: "or9", label: "Or 9 carats" },
+  { key: "or14", label: "Or 14 carats" },
   { key: "or", label: "Or 18 carats" },
+  { key: "or22", label: "Or 22 carats" },
+  { key: "or24", label: "Or 24 carats" },
   { key: "argent", label: "Argent 925" },
 ];
 

@@ -126,13 +126,13 @@ export default function ProductAttributesFields({
               <Chip
                 key={m.key}
                 active={value.metal === m.key}
-                onClick={() => onChange({ metal: m.key, goldColor: m.key === "or" ? value.goldColor : undefined })}
+                onClick={() => onChange({ metal: m.key, goldColor: m.key.startsWith("or") ? value.goldColor : undefined })}
               >
                 {m.label}
               </Chip>
             ))}
           </div>
-          {value.metal === "or" && goldColors.length > 0 && (
+          {!!value.metal?.startsWith("or") && goldColors.length > 0 && (
             <div className="mt-3 flex items-center gap-2">
               {goldColors.map((c) => (
                 <button

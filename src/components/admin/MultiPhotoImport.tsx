@@ -86,7 +86,7 @@ export default function MultiPhotoImport({
         gender: batchGender,
         category: batchCategory || it.category,
         metal: batchMetal || it.metal,
-        goldColor: batchMetal === "or" ? batchGoldColor || it.goldColor : undefined,
+        goldColor: batchMetal.startsWith("or") ? batchGoldColor || it.goldColor : undefined,
         ...promo,
       }))
     );
@@ -142,7 +142,7 @@ export default function MultiPhotoImport({
       category: batchCategory,
       gender: batchGender,
       metal: batchMetal || undefined,
-      goldColor: batchMetal === "or" ? batchGoldColor || undefined : undefined,
+      goldColor: batchMetal.startsWith("or") ? batchGoldColor || undefined : undefined,
       shortDesc: "",
       longDesc: "",
       hashtags: [],
@@ -195,7 +195,7 @@ export default function MultiPhotoImport({
           dimensionValue: it.dimensionValue || undefined,
           stone: it.stone || undefined,
           metal: it.metal || undefined,
-          goldColor: it.metal === "or" ? it.goldColor || undefined : undefined,
+          goldColor: it.metal?.startsWith("or") ? it.goldColor || undefined : undefined,
           isBlackFriday: it.isBlackFriday || false,
           discountPct: it.discountPct || 0,
           promoEndsAt: it.promoEndsAt || undefined,
@@ -267,7 +267,7 @@ export default function MultiPhotoImport({
                     </option>
                   ))}
                 </select>
-                {batchMetal === "or" &&
+                {batchMetal.startsWith("or") &&
                   goldColors.map((c) => (
                     <button
                       key={c.key}
