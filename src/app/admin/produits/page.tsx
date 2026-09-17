@@ -451,6 +451,7 @@ function ProductModal({
                   max={100}
                   value={form.discountPct || 0}
                   onChange={(e) => setForm({ ...form, discountPct: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) })}
+                  onFocus={(e) => e.currentTarget.select()}
                   className="w-20 rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
                 />
               )}
@@ -675,6 +676,7 @@ function Field({ label, value, onChange, type = "text" }: { label: string; value
         type={type}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={type === "number" ? (e) => e.currentTarget.select() : undefined}
         className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
       />
     </div>

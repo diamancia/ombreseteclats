@@ -68,6 +68,7 @@ export default function AdminPromotionsPage() {
             max={100}
             value={discountPct}
             onChange={(e) => setDiscountPct(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
+            onFocus={(e) => e.currentTarget.select()}
             className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
           />
         </div>
@@ -78,6 +79,7 @@ export default function AdminPromotionsPage() {
             min={1}
             value={hours}
             onChange={(e) => setHours(Math.max(1, parseInt(e.target.value) || 1))}
+            onFocus={(e) => e.currentTarget.select()}
             className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
           />
         </div>

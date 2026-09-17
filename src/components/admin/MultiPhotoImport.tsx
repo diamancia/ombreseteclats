@@ -301,6 +301,7 @@ export default function MultiPhotoImport({
                   max={100}
                   value={batchDiscountPct}
                   onChange={(e) => setBatchDiscountPct(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
+                  onFocus={(e) => e.currentTarget.select()}
                   className="w-16 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900"
                 />
                 <span className="text-xs text-gray-400">% pendant</span>
@@ -309,6 +310,7 @@ export default function MultiPhotoImport({
                   min={1}
                   value={batchCountdownHours}
                   onChange={(e) => setBatchCountdownHours(Math.max(1, parseInt(e.target.value) || 1))}
+                  onFocus={(e) => e.currentTarget.select()}
                   className="w-16 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900"
                 />
                 <span className="text-xs text-gray-400">heures</span>
@@ -365,6 +367,7 @@ export default function MultiPhotoImport({
                           placeholder="Prix (€)"
                           value={it.basePrice || ""}
                           onChange={(e) => updateItem(it.id, { basePrice: parseFloat(e.target.value) || 0 })}
+                          onFocus={(e) => e.currentTarget.select()}
                           className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 focus:border-[var(--primary)] focus:outline-none"
                         />
                         <div className="flex-1">

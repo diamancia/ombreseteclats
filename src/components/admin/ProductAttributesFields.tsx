@@ -224,6 +224,7 @@ export default function ProductAttributesFields({
                 step="0.01"
                 value={stone.carats ?? ""}
                 onChange={(e) => updateStone({ carats: parseFloat(e.target.value) || 0 })}
+                onFocus={(e) => e.currentTarget.select()}
                 className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
               />
             </div>
