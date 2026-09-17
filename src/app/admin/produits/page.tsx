@@ -9,6 +9,14 @@ import { DEFAULT_METAL_TYPES, DEFAULT_GOLD_COLORS } from "@/lib/metals";
 
 const V1 = siteConfig.product.variant1;
 
+const STATUS_LABELS: Record<string, string> = {
+  available: "disponible",
+  unavailable: "épuisé",
+  soon: "bientôt",
+  pending: "à valider",
+  on_order: "à commander",
+};
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -74,9 +82,12 @@ export default function AdminProductsPage() {
       category: "",
       gender: "homme",
       delay: 2,
+      stock: 0,
       shortDesc: "",
       longDesc: "",
       allergens: "",
+      isPromo: false,
+      discountPct: 0,
       flavors: [],
       sizes: [],
       customLength: { enabled: false, presets: [39, 42], minCm: 30, maxCm: 70 },
@@ -145,7 +156,7 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-500">{p.category?.name || "—"}</td>
                   <td className="px-4 py-3 text-right font-semibold">{p.basePrice.toFixed(2)}€</td>
-                  <td className="px-4 py-3 text-center text-xs text-gray-500">{p.delay || 2}h</td>
+                  <td className="px-4 py-3 text-center text-xs text-gray-500">{p.delay || 2} j</td>
                   <td className="px-4 py-3 text-center">
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] ${
@@ -153,10 +164,14 @@ export default function AdminProductsPage() {
                           ? "bg-green-100 text-green-700"
                           : p.status === "pending"
                           ? "bg-amber-100 text-amber-700"
+                          : p.status === "on_order"
+                          ? "bg-blue-50 text-blue-600"
+                          : p.status === "unavailable"
+                          ? "bg-red-50 text-red-600"
                           : "bg-gray-50 text-gray-500"
                       }`}
                     >
-                      {p.status === "pending" ? "à valider" : p.status}
+                      {STATUS_LABELS[p.status] || p.status}
                     </span>
                   </td>
                   {socialModuleEnabled && (
@@ -353,7 +368,7 @@ function ProductModal({
 
           <div className="grid grid-cols-3 gap-4">
             <Field type="number" label="Prix de base (€) *" value={form.basePrice} onChange={(v) => setForm({ ...form, basePrice: parseFloat(v) || 0 })} />
-            <Field type="number" label="Délai mini (heures)" value={form.delay || 2} onChange={(v) => setForm({ ...form, delay: parseInt(v) || 2 })} />
+            <Field type="number" label={`${siteConfig.product.delayLabel} (jours)`} value={form.delay || 2} onChange={(v) => setForm({ ...form, delay: parseInt(v) || 2 })} />
             <div>
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Catégorie</label>
               <select
@@ -376,6 +391,12 @@ function ProductModal({
           )}
 
           <div className="grid grid-cols-3 gap-4">
+            <Field
+              type="number"
+              label="Quantité en stock"
+              value={form.stock ?? 0}
+              onChange={(v) => setForm({ ...form, stock: parseInt(v) || 0 })}
+            />
             <div>
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Statut</label>
               <select
@@ -384,10 +405,15 @@ function ProductModal({
                 className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
               >
                 <option value="available">Disponible</option>
-                <option value="unavailable">Indisponible</option>
+                <option value="unavailable">Épuisé</option>
+                <option value="on_order">À commander</option>
                 <option value="soon">Bientôt</option>
                 <option value="pending">À valider</option>
               </select>
+              <p className="mt-1 text-[11px] text-gray-400">
+                Recalculé automatiquement à l&apos;enregistrement à partir du stock (sauf Bientôt/À
+                valider, laissés manuels).
+              </p>
             </div>
             <div>
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Collection</label>
@@ -402,10 +428,34 @@ function ProductModal({
                 <option value="mixte">Mixte</option>
               </select>
             </div>
-            <label className="flex items-center gap-2 pt-6">
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex items-center gap-2">
               <input type="checkbox" checked={form.isNew} onChange={(e) => setForm({ ...form, isNew: e.target.checked })} />
               <span className="text-sm">Marquer comme nouveauté</span>
             </label>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!form.isPromo}
+                  onChange={(e) => setForm({ ...form, isPromo: e.target.checked })}
+                />
+                <span className="text-sm">Réduction</span>
+              </label>
+              {form.isPromo && (
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={form.discountPct || 0}
+                  onChange={(e) => setForm({ ...form, discountPct: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) })}
+                  className="w-20 rounded-lg border border-gray-300 bg-white text-gray-900 px-2 py-1 text-sm"
+                />
+              )}
+              {form.isPromo && <span className="text-xs text-gray-400">%</span>}
+            </div>
           </div>
 
           <div>
@@ -590,7 +640,7 @@ function ProductModal({
           <div className="rounded-xl border border-gray-200 p-4">
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider">Attributs de la pièce</h3>
             <ProductAttributesFields
-              value={{ jewelryType: form.jewelryType, dimensionValue: form.dimensionValue, stone: form.stone, metal: form.metal, goldColor: form.goldColor }}
+              value={{ jewelryType: form.jewelryType, dimensionValue: form.dimensionValue, stone: form.stone, metal: form.metal, goldColor: form.goldColor, metalCustom: form.metalCustom }}
               onChange={(patch) => setForm({ ...form, ...patch })}
               metalTypes={metalTypes}
               goldColors={goldColors}

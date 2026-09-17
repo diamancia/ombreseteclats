@@ -1,13 +1,22 @@
 "use client";
 import { useState } from "react";
 
-export default function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
+export default function ProductGallery({
+  images,
+  alt,
+  badges,
+}: {
+  images: string[];
+  alt: string;
+  badges?: React.ReactNode;
+}) {
   const [active, setActive] = useState(0);
   const main = images[active];
 
   return (
     <div>
-      <div className="aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--accent)] to-white shadow-lg">
+      <div className="relative aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--accent)] to-white shadow-lg">
+        {badges}
         {main ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img src={main} alt={alt} className="h-full w-full object-cover" />

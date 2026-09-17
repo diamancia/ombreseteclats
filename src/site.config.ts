@@ -162,7 +162,7 @@ export const siteConfig: SiteConfig = {
       // Remplacé par le sélecteur de longueur de chaîne (product.customLength).
       enabled: false,
     },
-    hasAllergens: true,
+    hasAllergens: false,
     allergensLabel: "Matière & entretien",
     delayLabel: "Délai d'expédition",
     delayUnit: "days",

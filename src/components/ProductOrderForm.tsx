@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { useCart } from "@/context/CartProvider";
 import { siteConfig } from "@/site.config";
+import { effectivePrice } from "@/lib/pricing";
 
 const V1 = siteConfig.product.variant1;
 
@@ -27,15 +28,16 @@ export default function ProductOrderForm({
   const effectiveLengthCm =
     cl?.enabled && lengthMode === "custom" && customCm !== "" ? Number(customCm) : lengthCm;
 
+  const priced = effectivePrice(product);
   const price = useMemo(() => {
-    const base = Number(product.basePrice) || 0;
+    const base = priced.price;
     const fs = V1.enabled ? Number(flavor?.surcharge) || 0 : 0;
     let lengthSurcharge = 0;
     if (cl?.enabled && effectiveLengthCm) {
       lengthSurcharge = (effectiveLengthCm - rule.refCm) * rule.pricePerCm;
     }
     return Math.max(base, base + fs + lengthSurcharge);
-  }, [product.basePrice, flavor, cl?.enabled, effectiveLengthCm, rule.refCm, rule.pricePerCm]);
+  }, [priced.price, flavor, cl?.enabled, effectiveLengthCm, rule.refCm, rule.pricePerCm]);
 
   const lengthInvalid =
     !!cl?.enabled &&
@@ -168,7 +170,14 @@ export default function ProductOrderForm({
       )}
 
       <div className="flex items-center justify-between border-t border-[var(--accent)] pt-4">
-        <div className="text-2xl font-semibold text-[var(--primary)]">{(price * qty).toFixed(2)}€</div>
+        <div className="text-2xl font-semibold text-[var(--primary)]">
+          {priced.originalPrice != null && (
+            <span className="mr-2 text-base text-[var(--foreground)]/40 line-through">
+              {(priced.originalPrice * qty).toFixed(2)}€
+            </span>
+          )}
+          {(price * qty).toFixed(2)}€
+        </div>
         <button
           type="button"
           disabled={lengthInvalid}

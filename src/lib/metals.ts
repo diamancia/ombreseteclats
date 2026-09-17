@@ -6,11 +6,12 @@
 export type MetalType = { key: string; label: string };
 export type GoldColor = { key: string; label: string; hex: string };
 
-// Ordre pensé pour le slider de filtre boutique : dégradé or jaune → gris/rose → argenté → perle.
+// Par défaut, seuls les deux titrages réellement utilisés par la boutique — "Perles" reste
+// ajoutable manuellement depuis Paramètres > Métaux si besoin un jour (clés inchangées, donc
+// aucune migration de données pour les produits existants).
 export const DEFAULT_METAL_TYPES: MetalType[] = [
-  { key: "or", label: "Or" },
-  { key: "argent", label: "Argent" },
-  { key: "perles", label: "Perles" },
+  { key: "or", label: "Or 18 carats" },
+  { key: "argent", label: "Argent 925" },
 ];
 
 // Icônes de couleur uniquement (pas de texte) sur les fiches produit — cf. demande :

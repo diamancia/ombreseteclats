@@ -20,6 +20,9 @@ type ImportItem = ProductAttrs & {
   uploadedUrl?: string;
   status: "idle" | "uploading" | "ai-loading" | "ready" | "error";
   error?: string;
+  isBlackFriday?: boolean;
+  discountPct?: number;
+  promoEndsAt?: string;
 };
 
 function fileNameToProductName(fileName: string): string {
@@ -57,13 +60,26 @@ export default function MultiPhotoImport({
   const [batchCategory, setBatchCategory] = useState("");
   const [batchMetal, setBatchMetal] = useState("");
   const [batchGoldColor, setBatchGoldColor] = useState("");
+  const [batchBlackFriday, setBatchBlackFriday] = useState(false);
+  const [batchDiscountPct, setBatchDiscountPct] = useState(20);
+  const [batchCountdownHours, setBatchCountdownHours] = useState(48);
   const itemsRef = useRef<ImportItem[]>([]);
   itemsRef.current = items;
 
   const topLevelCats = categories.filter((c) => !c.parent);
   const subCatsOf = (parentId: string) => categories.filter((c) => c.parent === parentId);
 
+  function batchPromoFields() {
+    if (!batchBlackFriday) return { isBlackFriday: false, discountPct: undefined, promoEndsAt: undefined };
+    return {
+      isBlackFriday: true,
+      discountPct: batchDiscountPct,
+      promoEndsAt: new Date(Date.now() + batchCountdownHours * 3600 * 1000).toISOString(),
+    };
+  }
+
   function applyBatchToAll() {
+    const promo = batchPromoFields();
     setItems((prev) =>
       prev.map((it) => ({
         ...it,
@@ -71,6 +87,7 @@ export default function MultiPhotoImport({
         category: batchCategory || it.category,
         metal: batchMetal || it.metal,
         goldColor: batchMetal === "or" ? batchGoldColor || it.goldColor : undefined,
+        ...promo,
       }))
     );
   }
@@ -130,6 +147,7 @@ export default function MultiPhotoImport({
       longDesc: "",
       hashtags: [],
       status: "idle",
+      ...batchPromoFields(),
     }));
     setItems((prev) => [...prev, ...newItems]);
     if (aiEnabled) newItems.forEach((it) => runAiDescribe(it.id));
@@ -155,7 +173,7 @@ export default function MultiPhotoImport({
     setSubmitting(true);
     setSubmitError(null);
     try {
-      // S'assurer que toutes les photos sont uploadées sur R2 avant l'envoi.
+      // S'assurer que toutes les photos sont uploadées avant l'envoi.
       const withUrls = await Promise.all(
         items.map(async (it) => {
           if (it.uploadedUrl) return it;
@@ -178,6 +196,9 @@ export default function MultiPhotoImport({
           stone: it.stone || undefined,
           metal: it.metal || undefined,
           goldColor: it.metal === "or" ? it.goldColor || undefined : undefined,
+          isBlackFriday: it.isBlackFriday || false,
+          discountPct: it.discountPct || 0,
+          promoEndsAt: it.promoEndsAt || undefined,
           aiGenerated: { description: !!it.shortDesc, hashtags: it.hashtags },
         })),
       };
@@ -263,6 +284,37 @@ export default function MultiPhotoImport({
               </div>
             </div>
           )}
+          <div>
+            <label className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              <input
+                type="checkbox"
+                checked={batchBlackFriday}
+                onChange={(e) => setBatchBlackFriday(e.target.checked)}
+              />
+              Black Friday (par défaut pour ce lot)
+            </label>
+            {batchBlackFriday && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={batchDiscountPct}
+                  onChange={(e) => setBatchDiscountPct(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
+                  className="w-16 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900"
+                />
+                <span className="text-xs text-gray-400">% pendant</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={batchCountdownHours}
+                  onChange={(e) => setBatchCountdownHours(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-16 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900"
+                />
+                <span className="text-xs text-gray-400">heures</span>
+              </div>
+            )}
+          </div>
           {items.length > 0 && (
             <button
               type="button"

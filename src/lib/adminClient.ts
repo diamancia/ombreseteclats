@@ -34,11 +34,15 @@ export const IMAGE_PRESETS = {
 
 export async function uploadImage(file: File, preset: ProcessOptions = IMAGE_PRESETS.product): Promise<string> {
   const processed = await processImage(file, preset);
-  const presign = await adminFetch("/api/upload", {
+  const res = await fetch(`/api/upload?filename=${encodeURIComponent(processed.name)}`, {
     method: "POST",
-    body: JSON.stringify({ filename: processed.name }),
+    headers: { "Content-Type": processed.type || "application/octet-stream", ...authHeaders() },
+    body: processed,
   });
-  const put = await fetch(presign.uploadUrl, { method: "PUT", body: processed });
-  if (!put.ok) throw new Error("Échec upload");
-  return presign.url as string;
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `HTTP ${res.status}`);
+  }
+  const { url } = await res.json();
+  return url as string;
 }

@@ -15,6 +15,7 @@ export type ProductAttrs = {
   stone?: StoneAttrs | null;
   metal?: string;
   goldColor?: string;
+  metalCustom?: string;
 };
 
 const JEWELRY_TYPES: { value: string; label: string }[] = [
@@ -148,6 +149,12 @@ export default function ProductAttributesFields({
               ))}
             </div>
           )}
+          <input
+            value={value.metalCustom || ""}
+            onChange={(e) => onChange({ metalCustom: e.target.value })}
+            placeholder="Précision libre (optionnel) — ex. Or 21 carats, Titane…"
+            className="mt-3 w-full max-w-xs rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
+          />
         </div>
       )}
 

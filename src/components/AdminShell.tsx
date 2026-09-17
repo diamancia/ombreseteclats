@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Package, Tag, ClipboardList, Settings as SettingsIcon, LogOut, Home, Users, Bell, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { LayoutDashboard, Package, Tag, ClipboardList, Settings as SettingsIcon, LogOut, Home, Users, Bell, ChevronLeft, ChevronRight, Sparkles, Percent } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import { TOKEN_KEY, USER_KEY } from "@/lib/storage";
 import { PermissionKey } from "@/lib/modules";
@@ -12,6 +12,7 @@ const nav: { href: string; label: string; icon: any; perm?: PermissionKey }[] = 
   { href: "/admin/produits", label: "Produits", icon: Package, perm: "produits" },
   { href: "/admin/categories", label: "Catégories", icon: Tag, perm: "categories" },
   { href: "/admin/landing-pages", label: "Landing pages", icon: Sparkles, perm: "produits" },
+  { href: "/admin/promotions", label: "Promotions", icon: Percent, perm: "produits" },
   { href: "/admin/commandes", label: "Commandes", icon: ClipboardList, perm: "commandes" },
   { href: "/admin/notifications", label: "Messagerie", icon: Bell },
   { href: "/admin/parametres", label: "Paramètres", icon: SettingsIcon, perm: "parametres" },

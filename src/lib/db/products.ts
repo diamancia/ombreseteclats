@@ -1,5 +1,6 @@
 import { db, throwIfError } from "./client";
 import { fromDbCategory, type Category } from "./categories";
+export { effectivePrice } from "@/lib/pricing";
 
 // Les fonctions ci-dessous renvoient des objets façonnés exactement comme le faisait
 // Mongoose (camelCase, `_id`, `category` peuplée en objet imbriqué) pour que la bascule des
@@ -14,7 +15,8 @@ export type Product = {
   basePrice: number;
   delay: number;
   isNew: boolean;
-  status: "available" | "unavailable" | "soon" | "pending";
+  status: "available" | "unavailable" | "soon" | "pending" | "on_order";
+  stock: number;
   imageUrl?: string | null;
   images: string[];
   allergens?: string | null;
@@ -28,6 +30,11 @@ export type Product = {
   stone?: any;
   metal?: string | null;
   goldColor?: string | null;
+  metalCustom?: string | null;
+  isPromo: boolean;
+  discountPct: number;
+  isBlackFriday: boolean;
+  promoEndsAt?: string | null;
   aiGenerated: { description: boolean; hashtags: string[] };
   socialPostStatus: "none" | "pending" | "published" | "failed";
   socialPostedAt?: string | null;
@@ -50,6 +57,7 @@ function fromDbProduct(row: any): Product {
     delay: row.delay,
     isNew: row.is_new,
     status: row.status,
+    stock: row.stock ?? 0,
     imageUrl: row.image_url,
     images: row.images || [],
     allergens: row.allergens,
@@ -63,6 +71,11 @@ function fromDbProduct(row: any): Product {
     stone: row.stone,
     metal: row.metal,
     goldColor: row.gold_color,
+    metalCustom: row.metal_custom,
+    isPromo: row.is_promo ?? false,
+    discountPct: row.discount_pct ?? 0,
+    isBlackFriday: row.is_blackfriday ?? false,
+    promoEndsAt: row.promo_ends_at,
     aiGenerated: row.ai_generated || { description: false, hashtags: [] },
     socialPostStatus: row.social_post_status,
     socialPostedAt: row.social_posted_at,
@@ -87,6 +100,11 @@ const FIELD_MAP: Record<string, string> = {
   jewelryType: "jewelry_type",
   dimensionValue: "dimension_value",
   goldColor: "gold_color",
+  metalCustom: "metal_custom",
+  isPromo: "is_promo",
+  discountPct: "discount_pct",
+  isBlackFriday: "is_blackfriday",
+  promoEndsAt: "promo_ends_at",
   aiGenerated: "ai_generated",
   socialPostStatus: "social_post_status",
   socialPostedAt: "social_posted_at",
@@ -123,14 +141,37 @@ export async function getProductById(id: string): Promise<Product | null> {
   return data ? fromDbProduct(data) : null;
 }
 
+// Statut piloté par le stock : disponible dès qu'il y a au moins 1 pièce ; à 0, distingue une
+// pièce qui vient de se vendre (Épuisé) d'une pièce jamais approvisionnée (À commander). Les
+// états "soon"/"pending" restent volontairement manuels (modération / mise en avant), jamais
+// écrasés par le stock.
+export function deriveProductStatus(previousStatus: Product["status"] | undefined, stock: number): Product["status"] {
+  if (stock >= 1) return "available";
+  if (previousStatus === "soon" || previousStatus === "pending") return previousStatus;
+  if (previousStatus === "available") return "unavailable";
+  return "on_order";
+}
+
+async function withDerivedStatus(id: string | null, patch: Record<string, any>): Promise<Record<string, any>> {
+  if (patch.stock === undefined || patch.status === "soon" || patch.status === "pending") return patch;
+  let previousStatus: Product["status"] | undefined;
+  if (id) {
+    const { data } = await db().from("products").select("status").eq("id", id).maybeSingle();
+    previousStatus = data?.status;
+  }
+  return { ...patch, status: deriveProductStatus(previousStatus, Number(patch.stock) || 0) };
+}
+
 export async function createProduct(patch: Record<string, any>): Promise<Product> {
-  const row = throwIfError(await db().from("products").insert(toDbProduct(patch)).select(SELECT_WITH_CATEGORY).single());
+  const resolved = await withDerivedStatus(null, patch);
+  const row = throwIfError(await db().from("products").insert(toDbProduct(resolved)).select(SELECT_WITH_CATEGORY).single());
   return fromDbProduct(row);
 }
 
 export async function updateProduct(id: string, patch: Record<string, any>): Promise<Product> {
+  const resolved = await withDerivedStatus(id, patch);
   const row = throwIfError(
-    await db().from("products").update(toDbProduct(patch)).eq("id", id).select(SELECT_WITH_CATEGORY).single()
+    await db().from("products").update(toDbProduct(resolved)).eq("id", id).select(SELECT_WITH_CATEGORY).single()
   );
   return fromDbProduct(row);
 }

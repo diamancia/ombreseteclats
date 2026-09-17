@@ -6,6 +6,8 @@ import Cart from "@/components/Cart";
 import ProductOrderForm from "@/components/ProductOrderForm";
 import ProductGallery from "@/components/ProductGallery";
 import ProductCard from "@/components/ProductCard";
+import ProductBadges from "@/components/ProductBadges";
+import ProductPrice from "@/components/ProductPrice";
 import ContactButton from "@/components/ContactButton";
 import { ArrowLeft } from "lucide-react";
 import { getProductById, listProducts, getSettings } from "@/lib/db";
@@ -56,16 +58,14 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             <ArrowLeft className="h-4 w-4" /> Retour à la boutique
           </Link>
           <div className="grid gap-10 md:grid-cols-2">
-            <ProductGallery images={galleryImages} alt={product.name} />
+            <ProductGallery images={galleryImages} alt={product.name} badges={<ProductBadges product={product} />} />
             <div>
               {product.category && (
                 <p className="mb-2 text-xs uppercase tracking-widest text-[var(--primary)]">{product.category.name}</p>
               )}
               <h1 className="font-serif text-4xl">{product.name}</h1>
               {product.shortDesc && <p className="mt-3 text-[var(--foreground)]/70">{product.shortDesc}</p>}
-              <div className="mt-6 text-3xl font-semibold text-[var(--primary)]">
-                {product.basePrice.toFixed(2)}€
-              </div>
+              <ProductPrice product={product} className="mt-6 block text-3xl font-semibold text-[var(--primary)]" />
               {product.longDesc && (
                 <div className="mt-6 whitespace-pre-line text-sm text-[var(--foreground)]/80">{product.longDesc}</div>
               )}

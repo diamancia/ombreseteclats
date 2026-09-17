@@ -2,6 +2,7 @@
 import { useCart } from "@/context/CartProvider";
 import { ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { effectivePrice } from "@/lib/pricing";
 
 export default function AddToCartButton({ product, size = "sm" }: { product: any; size?: "sm" | "md" }) {
   const { addToCart } = useCart();
@@ -21,7 +22,7 @@ export default function AddToCartButton({ product, size = "sm" }: { product: any
     addToCart({
       productId: product._id,
       name: product.name,
-      price: product.basePrice,
+      price: effectivePrice(product).price,
       imageUrl: product.imageUrl,
     } as any);
   };

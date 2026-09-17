@@ -3,6 +3,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
 import AddToCartButton from "@/components/AddToCartButton";
+import ProductBadges from "@/components/ProductBadges";
+import ProductPrice from "@/components/ProductPrice";
 import ContactButton from "@/components/ContactButton";
 import FilterPanel from "@/components/FilterPanel";
 import MetalSlider from "@/components/MetalSlider";
@@ -230,16 +232,8 @@ export default async function CataloguePage({
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {filtered.map((p: any) => (
-                <article key={p._id} className="group overflow-hidden rounded-lg bg-[var(--muted)] shadow-sm hover:shadow-lg">
-                  {p.isNew && (
-                    <span
-                      className={`absolute z-10 m-3 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${
-                        p.gender === "femme" ? "bg-[var(--rose-gold)] text-white" : "bg-[var(--primary)] text-[var(--background)]"
-                      }`}
-                    >
-                      Nouveau
-                    </span>
-                  )}
+                <article key={p._id} className="group relative overflow-hidden rounded-lg bg-[var(--muted)] shadow-sm hover:shadow-lg">
+                  <ProductBadges product={p} />
                   <Link href={`/produit/${p._id}`}>
                     <div className="aspect-square overflow-hidden bg-gradient-to-br from-[var(--accent)] to-white">
                       {p.imageUrl ? (
@@ -261,7 +255,7 @@ export default async function CataloguePage({
                     </Link>
                     {p.shortDesc && <p className="mt-1 line-clamp-2 text-xs text-[var(--foreground)]/60">{p.shortDesc}</p>}
                     <div className="mt-3 flex items-center justify-between">
-                      <span className="font-serif text-lg text-[var(--primary)]">{p.basePrice.toFixed(2)}€</span>
+                      <ProductPrice product={p} className="font-serif text-lg text-[var(--primary)]" />
                       <AddToCartButton product={p} />
                     </div>
                   </div>

@@ -5,17 +5,15 @@ import { processImage } from "./imageProcess";
 // pipeline de compression que côté admin (src/lib/adminClient.ts), route API séparée.
 export async function uploadCustomOrderImage(file: File): Promise<string> {
   const processed = await processImage(file, { maxDim: 1600, quality: 0.85, square: false });
-  const res = await fetch("/api/custom-order-upload", {
+  const res = await fetch(`/api/custom-order-upload?filename=${encodeURIComponent(processed.name)}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ filename: processed.name }),
+    headers: { "Content-Type": processed.type || "application/octet-stream" },
+    body: processed,
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || "Échec de la demande d'upload");
+    throw new Error(body.error || "Échec de l'upload");
   }
-  const presign = await res.json();
-  const put = await fetch(presign.uploadUrl, { method: "PUT", body: processed });
-  if (!put.ok) throw new Error("Échec upload");
-  return presign.url as string;
+  const { url } = await res.json();
+  return url as string;
 }
