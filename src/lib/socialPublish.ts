@@ -1,3 +1,5 @@
+import type { SocialChannel } from "./socialChannels";
+
 const GRAPH_API_VERSION = "v21.0";
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
@@ -13,7 +15,7 @@ export type SocialPublishResult = {
   facebookPostId?: string;
   instagramPostId?: string;
   pinterestPinId?: string;
-  errors: string[];
+  errors: Partial<Record<SocialChannel, string>>;
 };
 
 function buildCaption({ name, longDesc, hashtags }: SocialPublishInput): string {
@@ -86,32 +88,40 @@ async function publishToPinterest(imageUrl: string, title: string, description: 
   return data.id;
 }
 
+const DEFAULT_CHANNELS: SocialChannel[] = ["facebook", "instagram", "pinterest"];
+
 /**
- * Publie une fiche produit sur Facebook, Instagram et Pinterest en parallèle. Chaque canal est
- * tenté indépendamment : l'échec de l'un n'empêche pas les autres. Le résultat est "réussi" dès
- * qu'au moins un canal a publié — les erreurs individuelles sont remontées pour affichage admin.
+ * Publie une fiche produit sur les canaux demandés (par défaut les 3) en parallèle. Chaque canal
+ * est tenté indépendamment : l'échec de l'un n'empêche pas les autres, et seuls les canaux
+ * demandés sont contactés (chaque bouton de l'admin ne déclenche que son propre canal).
  */
-export async function publishProductToSocial(input: SocialPublishInput): Promise<SocialPublishResult> {
+export async function publishProductToSocial(
+  input: SocialPublishInput,
+  channels: SocialChannel[] = DEFAULT_CHANNELS
+): Promise<SocialPublishResult> {
   const caption = buildCaption(input);
-  const errors: string[] = [];
+  const errors: Partial<Record<SocialChannel, string>> = {};
   let facebookPostId: string | undefined;
   let instagramPostId: string | undefined;
   let pinterestPinId: string | undefined;
 
-  const [fb, ig, pin] = await Promise.allSettled([
-    publishToFacebookPage(input.imageUrl, caption),
-    publishToInstagram(input.imageUrl, caption),
-    publishToPinterest(input.imageUrl, input.name, caption, input.productUrl),
-  ]);
+  const tasks = channels.map((channel) => {
+    if (channel === "facebook") return publishToFacebookPage(input.imageUrl, caption);
+    if (channel === "instagram") return publishToInstagram(input.imageUrl, caption);
+    return publishToPinterest(input.imageUrl, input.name, caption, input.productUrl);
+  });
+  const settled = await Promise.allSettled(tasks);
 
-  if (fb.status === "fulfilled") facebookPostId = fb.value;
-  else errors.push(`Facebook : ${fb.reason?.message || fb.reason}`);
-
-  if (ig.status === "fulfilled") instagramPostId = ig.value;
-  else errors.push(`Instagram : ${ig.reason?.message || ig.reason}`);
-
-  if (pin.status === "fulfilled") pinterestPinId = pin.value;
-  else errors.push(`Pinterest : ${pin.reason?.message || pin.reason}`);
+  settled.forEach((outcome, i) => {
+    const channel = channels[i];
+    if (outcome.status === "fulfilled") {
+      if (channel === "facebook") facebookPostId = outcome.value;
+      else if (channel === "instagram") instagramPostId = outcome.value;
+      else pinterestPinId = outcome.value;
+    } else {
+      errors[channel] = outcome.reason?.message || String(outcome.reason);
+    }
+  });
 
   return { facebookPostId, instagramPostId, pinterestPinId, errors };
 }
