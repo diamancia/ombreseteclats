@@ -1,13 +1,19 @@
 @import "tailwindcss";
 
+/* Repli statique — en pratique toujours écrasé par le <style> injecté dans layout.tsx
+   (mêmes valeurs, générées depuis site.config.ts), gardé identique pour éviter un flash. */
 :root {
-  --background: #fefaf7;
-  --foreground: #2a1a1a;
-  --primary: #a04552;
-  --primary-dark: #7d3541;
-  --accent: #f5e6e3;
-  --muted: #faf0ec;
+  --background: #faf7f0;
+  --foreground: #2a2519;
+  --primary: #a3835a;
+  --primary-dark: #8a6d47;
+  --accent: #e6ddc8;
+  --muted: #f6f1e6;
   --rose-gold: #c9a08a;
+  --card: #ffffff;
+  --gold-pale: #f1e6d0;
+  --ink-soft: #6b6350;
+  --ink-faint: #a49c86;
 }
 
 @theme inline {
@@ -18,19 +24,25 @@
   --color-accent: var(--accent);
   --color-muted: var(--muted);
   --color-rose-gold: var(--rose-gold);
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-playfair);
+  --color-card: var(--card);
+  --color-gold-pale: var(--gold-pale);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --font-sans: var(--font-jost);
+  --font-serif: var(--font-cormorant);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-jost), system-ui, sans-serif;
 }
 
+/* Cormorant Garamond a une hauteur d'x plus faible et un trait plus fin que Playfair : on
+   compense par un poids 500, et on retire l'interlettrage (la police est déjà très aérée). */
 .font-serif {
-  font-family: var(--font-playfair), Georgia, serif;
-  letter-spacing: 0.02em;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 500;
 }
 
 /* Bandeau défilant (annonces/promotions du header) — deux copies du contenu, on
@@ -66,25 +78,32 @@ body {
 .bubbles-track::-webkit-scrollbar {
   display: none;
 }
+/* Mouvement réduit : on garde un seul exemplaire des bulles (les copies ne servent qu'à
+   boucler le défilement) — leur nombre est dynamique, d'où le :not(:first-of-type). */
 @media (prefers-reduced-motion: reduce) {
-  .bubbles-track-group:last-of-type {
+  .bubbles-track-group:not(:first-of-type) {
     display: none;
   }
 }
 
-/* Avis clients (Google Business Profile) — palette scoped à la section, indépendante des
-   variables globales --background/--foreground (qui ne varient pas avec le thème sur ce
-   site) et branchée sur l'attribut data-theme posé par ThemeToggle.tsx (sombre = valeur par
-   défaut tant que l'utilisateur n'a pas basculé en clair, comme le reste du site). */
-.reviews-section {
-  --gr-bg: #131316;
-  --gr-card: #1a191c;
-  --gr-text: #ece9e3;
-  --gr-text-secondary: #aca9a2;
-  --gr-border: #2c2b2e;
-  --gr-accent: #d69a5c;
+/* Rangées de cartes défilantes (meilleures ventes, nouveautés, pierres) — scroll natif
+   horizontal (swipe tactile, molette, glisser) avec accroche, barre masquée car la
+   navigation se fait aux flèches. */
+.carousel-track {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
 }
-:root[data-theme="light"] .reviews-section {
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+.carousel-track > * {
+  scroll-snap-align: start;
+}
+
+/* Avis clients (Google Business Profile) — palette scoped à la section, indépendante des
+   variables globales --background/--foreground. */
+.reviews-section {
   --gr-bg: #f1eee9;
   --gr-card: #fbfaf7;
   --gr-text: #1e1f22;

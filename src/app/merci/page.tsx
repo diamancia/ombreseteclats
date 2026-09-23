@@ -17,7 +17,7 @@ export default async function ThankYouPage({
       <Navbar />
       <Cart />
       <ClearCartOnMount />
-      <main className="min-h-screen bg-[var(--muted)] py-20">
+      <main className="min-h-screen bg-[var(--muted)] py-14">
         <div className="mx-auto max-w-xl rounded-2xl bg-[var(--muted)] p-10 text-center shadow-xl">
           <CheckCircle2 className="mx-auto h-16 w-16 text-[var(--primary)]" />
           <h1 className="mt-4 font-serif text-3xl">Merci pour votre commande !</h1>

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type CategoryBubble = { label: string; href: string; imageUrl?: string };
 
@@ -36,15 +36,40 @@ const RESUME_DELAY = 2500; // ms avant reprise du défilement auto après une in
 // Rangée de catégories en bulles, sous le header — admin-éditable depuis Paramètres
 // (settings.categoryBubbles). Défile automatiquement (scrollLeft piloté en JS, pas de CSS
 // animation) ET se scrolle manuellement : swipe tactile natif, molette/trackpad natifs, et
-// glisser-déposer à la souris (non natif sur overflow-x-auto, géré via Pointer Events). Deux
-// copies des bulles dans le track pour boucler sans à-coup — on rembobine à la moitié de la
-// largeur totale. Masquée si la liste est vide.
+// glisser-déposer à la souris (non natif sur overflow-x-auto, géré via Pointer Events). Le
+// groupe de bulles est répété assez de fois pour dépasser la largeur de l'écran, sinon il n'y
+// a tout simplement rien à faire défiler ; on rembobine après un groupe complet, la suite
+// étant identique au pixel près. Masquée si la liste est vide.
 export default function CategoryBubbles({ bubbles }: { bubbles: CategoryBubble[] }) {
   const items = (bubbles || []).filter((b) => b.label?.trim() && b.href?.trim());
   const trackRef = useRef<HTMLDivElement>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
   const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const dragRef = useRef({ dragging: false, startX: 0, startScroll: 0, moved: false });
+  // Position réelle en flottant : `scrollLeft` est arrondi par le navigateur, donc relire la
+  // valeur qu'on vient d'écrire ferait perdre l'incrément (0,4 px/frame ramené à 0) et le
+  // bandeau resterait figé. On garde donc la position de référence ici.
+  const posRef = useRef(0);
+  const [repeats, setRepeats] = useState(2);
+
+  // Nombre de copies nécessaires pour que le contenu déborde franchement (deux largeurs
+  // d'écran), recalculé quand la taille change — sans débordement, aucun défilement possible.
+  useEffect(() => {
+    const track = trackRef.current;
+    const group = groupRef.current;
+    if (!track || !group) return;
+    function measure() {
+      const groupWidth = group!.offsetWidth;
+      if (groupWidth <= 0) return;
+      setRepeats(Math.max(2, Math.ceil((track!.clientWidth * 2) / groupWidth)));
+    }
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(track);
+    observer.observe(group);
+    return () => observer.disconnect();
+  }, [items.length]);
 
   useEffect(() => {
     if (items.length === 0) return;
@@ -54,18 +79,25 @@ export default function CategoryBubbles({ bubbles }: { bubbles: CategoryBubble[]
 
     let frame: number;
     function step() {
-      if (!pausedRef.current && track) {
-        const half = track.scrollWidth / 2;
-        if (half > 0) {
-          track.scrollLeft += AUTO_SCROLL_SPEED;
-          if (track.scrollLeft >= half) track.scrollLeft -= half;
+      if (!track) return;
+      if (pausedRef.current) {
+        // L'utilisateur a la main : on se recale sur sa position avant de reprendre.
+        posRef.current = track.scrollLeft;
+      } else {
+        const groupWidth = groupRef.current?.offsetWidth || 0;
+        const maxScroll = track.scrollWidth - track.clientWidth;
+        if (groupWidth > 0 && maxScroll > 1) {
+          let next = posRef.current + AUTO_SCROLL_SPEED;
+          if (next >= groupWidth) next -= groupWidth;
+          posRef.current = next;
+          track.scrollLeft = next;
         }
       }
       frame = requestAnimationFrame(step);
     }
     frame = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frame);
-  }, [items.length]);
+  }, [items.length, repeats]);
 
   function pause() {
     pausedRef.current = true;
@@ -130,10 +162,14 @@ export default function CategoryBubbles({ bubbles }: { bubbles: CategoryBubble[]
           scheduleResume();
         }}
       >
-        {[0, 1].map((rep) => (
-          <div key={rep} className="bubbles-track-group flex flex-none">
+        {Array.from({ length: repeats }, (_, rep) => (
+          <div
+            key={rep}
+            ref={rep === 0 ? groupRef : undefined}
+            className="bubbles-track-group flex flex-none"
+          >
             {items.map((b, i) => (
-              <Bubble key={`${rep}-${i}`} b={b} ariaHidden={rep === 1} />
+              <Bubble key={`${rep}-${i}`} b={b} ariaHidden={rep > 0} />
             ))}
           </div>
         ))}

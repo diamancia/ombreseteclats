@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ombre & Éclats — proposition mobile (fond clair)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf7f0;
+    --card: #ffffff;
+    --line: #e6ddc8;
+    --ink: #2a2519;
+    --ink-soft: #6b6350;
+    --ink-faint: #a49c86;
+    --gold: #a3835a;
+    --gold-deep: #8a6d47;
+    --gold-pale: #f1e6d0;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: #efe9db;
+    font-family: 'Jost', sans-serif;
+    color: var(--ink);
+  }
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 44px 20px 70px;
+  }
+  .intro { text-align: center; margin-bottom: 34px; }
+  .intro .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--gold-deep);
+    margin-bottom: 6px;
+  }
+  .intro h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 27px;
+    margin: 0 0 10px;
+  }
+  .intro p {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+
+  .flow {
+    display: flex;
+    gap: 26px;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .screen-block { width: 300px; }
+  .screen-label {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
+  .screen-label b { color: var(--ink-soft); }
+
+  .phone {
+    background: #1c1914;
+    border-radius: 30px;
+    padding: 9px;
+    box-shadow: 0 16px 34px rgba(0,0,0,0.22);
+  }
+  .screen {
+    background: var(--paper);
+    border-radius: 21px;
+    overflow: hidden;
+    height: 620px;
+    position: relative;
+  }
+
+  /* ===== shared top ===== */
+  .banner {
+    background: var(--gold-pale);
+    color: var(--gold-deep);
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 15px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+  }
+  .topbar .logo { font-family: 'Cormorant Garamond', serif; font-size: 15px; }
+  .topbar .icons { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-soft); }
+  .topbar .icons .cart-wrap { position: relative; }
+  .topbar .icons .cart-count {
+    position: absolute; top: -5px; right: -6px;
+    background: var(--gold-deep); color: var(--paper);
+    font-size: 7px; line-height: 1;
+    width: 13px; height: 13px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ===== screen 1: bubbles + hero ===== */
+  .bubbles {
+    display: flex;
+    gap: 9px;
+    padding: 12px 15px 4px;
+    overflow: hidden;
+  }
+  .bub {
+    flex-shrink: 0;
+    width: 46px;
+    text-align: center;
+  }
+  .bub .circle {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #efe0c2, #d9c194);
+    margin: 0 auto 4px;
+    border: 1px solid var(--line);
+  }
+  .bub .cap { font-size: 7.5px; color: var(--ink-soft); letter-spacing: 0.02em; }
+
+  .hero {
+    margin: 14px 15px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    height: 330px;
+    background: linear-gradient(150deg, #f1e9d8 0%, #e3d3ac 55%, #cdb583 100%);
+  }
+  .hero::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%);
+  }
+  .hero-ring {
+    position: absolute;
+    right: 18px; top: 50%;
+    transform: translateY(-50%);
+    width: 84px; height: 84px;
+    border-radius: 50%;
+    border: 10px solid #b48d55;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.4), 0 8px 16px rgba(120,90,40,0.25);
+  }
+  .hero-text {
+    position: absolute;
+    left: 16px; bottom: 16px; right: 60px;
+    z-index: 2;
+  }
+  .hero-text .kicker {
+    font-size: 10px; color: var(--gold-deep); letter-spacing: 0.04em; margin-bottom: 5px;
+  }
+  .hero-text h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 21px;
+    line-height: 1.15;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+  .hero-cta {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 10.5px;
+    letter-spacing: 0.03em;
+    padding: 10px 16px;
+    border-radius: 3px;
+  }
+  .rating-inline {
+    margin: 12px 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .rating-inline .stars { color: var(--gold); letter-spacing: 1px; font-size: 11px; }
+
+  .section-title-mini {
+    padding: 20px 15px 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+  }
+  .mini-row { display: flex; gap: 10px; padding: 0 15px; }
+  .mini-card {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .mini-card .ph {
+    height: 74px;
+    background: linear-gradient(135deg, #efe4cc, #d6c298);
+  }
+  .mini-card .info { padding: 7px 8px; }
+  .mini-card .info .n { font-size: 9.5px; }
+  .mini-card .info .p { font-size: 9.5px; color: var(--gold-deep); margin-top: 2px; }
+
+  /* ===== screen 2: best sellers + nouveautes ===== */
+  .sec { padding: 18px 15px 6px; }
+  .sec-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .sec-head h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 17px;
+    margin: 0;
+  }
+  .sec-head .see-all { font-size: 10px; color: var(--gold-deep); letter-spacing: 0.03em; }
+  .card-row { display: flex; gap: 10px; overflow: hidden; }
+  .pcard {
+    width: 120px;
+    flex-shrink: 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .pcard .photo {
+    height: 100px;
+    background: linear-gradient(135deg, #eee1c4, #cbb187);
+    position: relative;
+  }
+  .pcard .badge {
+    position: absolute; top: 6px; left: 6px;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 7px;
+    letter-spacing: 0.04em;
+    padding: 2px 5px;
+    border-radius: 3px;
+  }
+  .pcard .info { padding: 8px 9px; }
+  .pcard .info .n { font-size: 10px; line-height: 1.25; }
+  .pcard .info .p { font-size: 10.5px; color: var(--gold-deep); margin-top: 4px; font-weight: 500; }
+  .divider-soft {
+    height: 1px;
+    background: var(--line);
+    margin: 22px 15px 0;
+  }
+
+  /* ===== screen 3: avis + footer condensed ===== */
+  .avis-head {
+    text-align: center;
+    padding: 20px 15px 12px;
+  }
+  .avis-head .eyebrow { font-size: 9.5px; color: var(--ink-faint); letter-spacing: 0.05em; }
+  .avis-head h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    margin: 4px 0 4px;
+  }
+  .avis-head .score { font-size: 11px; color: var(--ink-soft); }
+  .avis-head .score .stars { color: var(--gold); }
+  .avis-row { display: flex; gap: 9px; padding: 0 15px; overflow: hidden; }
+  .avis-card {
+    width: 150px;
+    flex-shrink: 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  .avis-card .who { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .avis-card .initial {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--gold-pale); color: var(--gold-deep);
+    font-size: 9px; display: flex; align-items: center; justify-content: center;
+  }
+  .avis-card .name { font-size: 9.5px; }
+  .avis-card .stars { color: var(--gold); font-size: 9px; margin-bottom: 4px; }
+  .avis-card .txt { font-size: 9px; color: var(--ink-soft); line-height: 1.4; }
+
+  .footer-c {
+    margin: 18px 15px 0;
+    border-top: 1px solid var(--line);
+  }
+  .foot-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px;
+  }
+  .foot-row .chev { color: var(--ink-faint); font-size: 10px; }
+  .foot-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 2px 4px;
+  }
+  .foot-bottom .logo-mini { font-family: 'Cormorant Garamond', serif; font-size: 13px; }
+  .foot-bottom .socials { display: flex; gap: 9px; font-size: 13px; }
+  .foot-bottom .socials .ig { color: #d1447a; }
+  .foot-bottom .socials .fb { color: #3b5998; }
+  .foot-bottom .socials .li { color: #0a66c2; }
+  .copyright { font-size: 8px; color: var(--ink-faint); padding: 6px 2px 14px; }
+
+  .notes {
+    max-width: 900px;
+    margin: 32px auto 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+  }
+  .notes strong { color: var(--ink); }
+  .notes ul { margin: 8px 0 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="intro">
+    <div class="eyebrow">OMBRE &amp; ÉCLATS — PROPOSITION FOND CLAIR</div>
+    <h1>Le flux mobile complet, écran par écran</h1>
+    <p>Fond blanc/crème partout, bandeau du haut discret (contraste léger, plus de bloc sombre), bulles → hero avec CTA, puis les sections resserrées.</p>
+  </div>
+
+  <div class="flow">
+
+    <div class="screen-block">
+      <div class="screen-label">Écran 1 — <b>bulles + hero</b></div>
+      <div class="phone">
+        <div class="screen">
+          <div class="banner">−15% CETTE SEMAINE AVEC LE CODE OE15</div>
+          <div class="topbar">
+            <div class="logo">Ombre &amp; Éclats</div>
+            <div class="icons">
+              <span>🔍</span>
+              <span>📍</span>
+              <span class="cart-wrap">🛍<span class="cart-count">2</span></span>
+              <span>☰</span>
+            </div>
+          </div>
+          <div class="bubbles">
+            <div class="bub"><div class="circle"></div><div class="cap">Perles</div></div>
+            <div class="bub"><div class="circle"></div><div class="cap">Best</div></div>
+            <div class="bub"><div class="circle"></div><div class="cap">Neuf</div></div>
+            <div class="bub"><div class="circle"></div><div class="cap">Bagues</div></div>
+            <div class="bub"><div class="circle"></div><div class="cap">Bracel.</div></div>
+          </div>
+          <div class="hero">
+            <div class="hero-ring"></div>
+            <div class="hero-text">
+              <div class="kicker">Argent massif 925</div>
+              <h2>Des pièces qui durent, pas des tendances.</h2>
+              <div class="hero-cta">Voir la collection</div>
+            </div>
+          </div>
+          <div class="rating-inline"><span class="stars">★★★★★</span> 5.0 sur Google · 78 avis</div>
+          <div class="section-title-mini">Best-sellers</div>
+          <div class="mini-row">
+            <div class="mini-card"><div class="ph"></div><div class="info"><div class="n">Chevalière Écusson</div><div class="p">189.00€</div></div></div>
+            <div class="mini-card"><div class="ph"></div><div class="info"><div class="n">Bague Stratum</div><div class="p">79.00€</div></div></div>
+            <div class="mini-card"><div class="ph"></div><div class="info"><div class="n">Gourmette Fig.</div><div class="p">139.00€</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-block">
+      <div class="screen-label">Écran 2 — <b>catalogue</b></div>
+      <div class="phone">
+        <div class="screen">
+          <div class="sec">
+            <div class="sec-head"><h3>Meilleures ventes</h3><div class="see-all">Voir tout</div></div>
+            <div class="card-row">
+              <div class="pcard"><div class="photo"></div><div class="info"><div class="n">Chevalière Écusson Classique</div><div class="p">189.00€</div></div></div>
+              <div class="pcard"><div class="photo"><div class="badge">NOUVEAU</div></div><div class="info"><div class="n">Bague Stratum</div><div class="p">79.00€</div></div></div>
+              <div class="pcard"><div class="photo"></div><div class="info"><div class="n">Gourmette Figaro</div><div class="p">139.00€</div></div></div>
+            </div>
+          </div>
+          <div class="divider-soft"></div>
+          <div class="sec">
+            <div class="sec-head"><h3>Nouveautés</h3><div class="see-all">Voir tout</div></div>
+            <div class="card-row">
+              <div class="pcard"><div class="photo"><div class="badge">NOUVEAU</div></div><div class="info"><div class="n">Gourmette Américaine Plate</div><div class="p">209.00€</div></div></div>
+              <div class="pcard"><div class="photo"><div class="badge">NOUVEAU</div></div><div class="info"><div class="n">Chevalière Hexagonale</div><div class="p">179.00€</div></div></div>
+              <div class="pcard"><div class="photo"></div><div class="info"><div class="n">Chevalière Brutaliste</div><div class="p">169.00€</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-block">
+      <div class="screen-label">Écran 3 — <b>avis + footer</b></div>
+      <div class="phone">
+        <div class="screen">
+          <div class="avis-head">
+            <div class="eyebrow">GOOGLE BUSINESS PROFILE</div>
+            <h3>Avis clients</h3>
+            <div class="score"><span class="stars">★★★★★</span> 5.0 · 78 avis</div>
+          </div>
+          <div class="avis-row">
+            <div class="avis-card">
+              <div class="who"><div class="initial">TL</div><div class="name">tarik lahlali</div></div>
+              <div class="stars">★★★★★</div>
+              <div class="txt">Je tiens à vous remercier sincèrement pour les informations…</div>
+            </div>
+            <div class="avis-card">
+              <div class="who"><div class="initial">MR</div><div class="name">Mme rm</div></div>
+              <div class="stars">★★★★★</div>
+              <div class="txt">Très satisfaite de la qualité des bijoux et du rapport qualité…</div>
+            </div>
+          </div>
+
+          <div class="footer-c">
+            <div class="foot-row">Boutique <span class="chev">▾</span></div>
+            <div class="foot-row">Sur-mesure <span class="chev">▾</span></div>
+            <div class="foot-row">Contact <span class="chev">▾</span></div>
+            <div class="foot-row">Informations légales <span class="chev">▾</span></div>
+            <div class="foot-bottom">
+              <div class="logo-mini">Ombre &amp; Éclats</div>
+              <div class="socials"><span class="ig">📷</span><span class="fb">f</span><span class="li">in</span></div>
+            </div>
+            <div class="copyright">© 2026 Igor bijoux — Tous droits réservés</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <strong>Ce qui a changé :</strong>
+    <ul>
+      <li><strong>Fond clair partout</strong> (crème/blanc) — plus de bloc noir ou dégradé sombre ; le hero utilise une photo/illustration claire avec un accent doré, cohérente avec le reste du site.</li>
+      <li><strong>Bandeau du haut allégé</strong> — passe d'un bloc marron plein à un simple fond doré pâle avec texte foncé : ça reste visible sans écraser visuellement le header en dessous.</li>
+      <li><strong>Ordre : bulles → hero avec CTA</strong>, comme demandé. Le hero est statique ici (facilement transformable en carrousel si tu veux plusieurs visuels), avec un seul CTA plein.</li>
+      <li><strong>Note Google remontée</strong> juste sous le hero, avant même les best-sellers — visible dès le 1er écran.</li>
+      <li><strong>Espacements resserrés et uniformes</strong> entre les blocs (même rythme vertical partout), au lieu des grands vides observés entre sections sur le site actuel.</li>
+      <li><strong>Footer resserré</strong> — lignes de titres rapprochées, plus de bloc "garanties" en bas (à replacer plus haut sur la page si tu veux les garder, par ex. sous le hero), icônes réseaux sociaux colorées à leurs couleurs de marque au lieu du gris uniforme.</li>
+      <li><strong>Header enrichi</strong> — ajout d'une loupe de recherche, d'un repère GPS (utile si tu as une boutique physique à Casablanca, renvoie vers l'itinéraire Google Maps) et d'un panier avec badge de quantité, en plus du menu.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

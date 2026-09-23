@@ -85,7 +85,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
 
           {suggestionsJson.length > 0 && (
-            <section className="mt-20">
+            <section className="mt-14">
               <div className="mb-8 flex flex-col items-center">
                 <h2 className="font-serif text-3xl tracking-wider">VOUS AIMEREZ AUSSI</h2>
                 <div className="mt-3 h-px w-16 bg-[var(--primary)]" />

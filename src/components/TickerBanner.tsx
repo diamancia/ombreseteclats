@@ -33,7 +33,7 @@ function AnnouncementItem({ a, ariaHidden }: { a: Announcement; ariaHidden?: boo
     <span className="mx-6 inline-flex items-center gap-2">
       {a.text}
       {left && (
-        <span className="rounded-full bg-black/15 px-2 py-0.5 text-[9px] font-bold tracking-normal">
+        <span className="rounded-full bg-[var(--primary)]/25 px-2 py-0.5 text-[9px] font-bold tracking-normal">
           ⏱ {left}
         </span>
       )}
@@ -61,7 +61,10 @@ export default function TickerBanner({
   const items: Announcement[] = active.length > 0 ? active : [{ text: fallbackText }];
 
   return (
-    <div className="overflow-hidden bg-[var(--primary)] py-3 text-[10px] font-semibold uppercase tracking-[0.35em] text-black">
+    // Doré pâle plutôt que l'or plein : le bandeau reste visible sans écraser le header juste
+    // en dessous. La bordure basse est nécessaire — sans elle, deux surfaces crème proches se
+    // confondraient.
+    <div className="overflow-hidden border-b border-[var(--accent)] bg-[var(--gold-pale)] py-2.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[var(--primary-dark)]">
       <div className="ticker-track flex w-max">
         {[0, 1].map((rep) => (
           <div key={rep} className="flex flex-none items-center whitespace-nowrap">

@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartProvider";
 import CookieBanner from "@/components/CookieBanner";
 import { siteConfig } from "@/site.config";
-import Script from "next/script"; // ← 1. AJOUT DE L'IMPORT
 
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+// Couple typographique de design/mockup-mobile-flow.html : Cormorant Garamond pour les titres
+// (.font-serif), Jost pour le texte courant. Les 34 fichiers qui utilisent déjà `font-serif`
+// basculent sans être touchés.
+const jost = Jost({ variable: "--font-jost", subsets: ["latin"], weight: ["400", "500"], display: "swap" });
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -18,6 +21,8 @@ export const metadata: Metadata = {
   description: siteConfig.meta.description,
 };
 
+// Un seul thème (mode sombre retiré) — variables CSS générées depuis site.config.ts pour
+// garder le système multi-verticaux (chaque site/client a sa propre palette).
 const themeVars = `:root{
   --background:${siteConfig.theme.background};
   --foreground:${siteConfig.theme.foreground};
@@ -26,33 +31,17 @@ const themeVars = `:root{
   --accent:${siteConfig.theme.accent};
   --muted:${siteConfig.theme.muted};
   --rose-gold:${siteConfig.theme.roseGold};
-}
-:root[data-theme="light"]{
-  --background:${siteConfig.theme.light.background};
-  --foreground:${siteConfig.theme.light.foreground};
-  --primary:${siteConfig.theme.light.primary};
-  --primary-dark:${siteConfig.theme.light.primaryDark};
-  --accent:${siteConfig.theme.light.accent};
-  --muted:${siteConfig.theme.light.muted};
+  --card:${siteConfig.theme.card};
+  --gold-pale:${siteConfig.theme.goldPale};
+  --ink-soft:${siteConfig.theme.inkSoft};
+  --ink-faint:${siteConfig.theme.inkFaint};
 }`;
-
-const THEME_STORAGE_KEY = `${siteConfig.brand.storagePrefix}_theme`;
-// Appliqué avant le premier rendu pour éviter un flash sombre→clair au chargement.
-const themeInitScript = `(function(){try{var t=localStorage.getItem(${JSON.stringify(
-  THEME_STORAGE_KEY
-)});if(t==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
+    <html lang="fr" className={`${jost.variable} ${cormorant.variable} h-full antialiased`}>
       <head>
         <style dangerouslySetInnerHTML={{ __html: themeVars }} />
-        {/* ↓ 2. REMPLACE LA BALISE <script> PAR CE COMPOSANT */}
-        <Script
-          id="theme-init-script"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: themeInitScript }}
-        />
       </head>
       <body className="min-h-full flex flex-col">
         <CartProvider>

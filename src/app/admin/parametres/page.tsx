@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { adminFetch, uploadImage, IMAGE_PRESETS } from "@/lib/adminClient";
-import { Upload, Save, Plus, Trash2, Pencil } from "lucide-react";
+import { Upload, Save, Plus, Trash2, Pencil, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { MODULES } from "@/lib/modules";
 import { SOCIAL_PLATFORMS, SocialIcon, normalizePlatformKey } from "@/components/SocialIcon";
 import { DEFAULT_METAL_TYPES, DEFAULT_GOLD_COLORS, MetalType, GoldColor } from "@/lib/metals";
@@ -163,6 +163,44 @@ export default function AdminSettingsPage() {
               </label>
             </div>
             <Field label="Ou URL directe" value={settings.heroImageUrl || ""} onChange={(v) => setSettings({ ...settings, heroImageUrl: v })} />
+            <p className="mt-2 text-xs text-gray-400">
+              Utilisée telle quelle si aucune photo n&apos;est ajoutée au carrousel ci-dessous.
+            </p>
+          </div>
+
+          <div className="border-t border-gray-100 pt-4">
+            <label className="mb-2 flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={settings.heroSlidesEnabled !== false}
+                onChange={(e) => setSettings({ ...settings, heroSlidesEnabled: e.target.checked })}
+              />
+              <span className="text-sm">Afficher une photo/un carrousel dans le Hero</span>
+            </label>
+            <p className="mb-3 text-xs text-gray-400">
+              Décoché : le bloc texte du Hero prend toute la largeur, aucun espace n&apos;est
+              réservé pour une image. Ajoute plusieurs photos ci-dessous pour un carrousel
+              défilant automatiquement, chacune avec son propre bouton (ex: « Acheter » vers un
+              produit, « Réserver » vers /sur-mesure) — laisse vide pour garder une simple photo
+              fixe.
+            </p>
+            <div className="mb-3 flex items-center gap-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Vitesse de défilement</label>
+              <input
+                type="number"
+                min={1}
+                step={0.5}
+                value={(settings.heroSlidesIntervalMs ?? 5000) / 1000}
+                onChange={(e) => setSettings({ ...settings, heroSlidesIntervalMs: Math.max(1, parseFloat(e.target.value) || 5) * 1000 })}
+                onFocus={(e) => e.currentTarget.select()}
+                className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+              />
+              <span className="text-xs text-gray-400">secondes entre chaque photo</span>
+            </div>
+            <HeroSlidesEditor
+              value={settings.heroSlides || []}
+              onChange={(v) => setSettings({ ...settings, heroSlides: v })}
+            />
           </div>
         </Card>
 
@@ -289,22 +327,6 @@ export default function AdminSettingsPage() {
           <Field type="number" label="Délai minimum global (heures)" value={settings.minDelay || 2} onChange={(v) => setSettings({ ...settings, minDelay: parseInt(v) || 2 })} />
           <WeekdayPicker value={settings.openWeekdays || [2, 3, 4, 5, 6]} onChange={(v) => setSettings({ ...settings, openWeekdays: v })} />
           <ClosedDatesPicker value={settings.closedDates || []} onChange={(v) => setSettings({ ...settings, closedDates: v })} />
-        </Card>
-
-        <Card title="Section « À propos » (accueil)">
-          <p className="text-xs text-gray-400">
-            Affichée en bas de la page d&apos;accueil, sous l&apos;ancre #a-propos — il n&apos;y a plus de page À propos séparée.
-          </p>
-          <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider">Texte affiché dans la section À propos</label>
-            <textarea
-              rows={8}
-              value={settings.about || ""}
-              onChange={(e) => setSettings({ ...settings, about: e.target.value })}
-              placeholder="Décrivez votre histoire, vos valeurs…"
-              className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
-            />
-          </div>
         </Card>
 
         <Card title="Mentions légales (footer)">
@@ -777,6 +799,106 @@ function CategoryBubblesEditor({ value, onChange }: { value: CategoryBubble[]; o
         className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
       >
         <Plus className="h-3 w-3" /> Ajouter une bulle
+      </button>
+    </div>
+  );
+}
+
+type HeroSlide = { imageUrl: string; ctaLabel?: string; ctaLink?: string; ctaAlign?: "left" | "center" | "right" };
+
+const CTA_ALIGN_OPTIONS: { key: "left" | "center" | "right"; icon: typeof AlignLeft; label: string }[] = [
+  { key: "left", icon: AlignLeft, label: "Bouton à gauche" },
+  { key: "center", icon: AlignCenter, label: "Bouton au centre" },
+  { key: "right", icon: AlignRight, label: "Bouton à droite" },
+];
+
+function HeroSlidesEditor({ value, onChange }: { value: HeroSlide[]; onChange: (v: HeroSlide[]) => void }) {
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
+  function update(idx: number, patch: Partial<HeroSlide>) {
+    onChange(value.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
+  }
+  function remove(idx: number) {
+    onChange(value.filter((_, i) => i !== idx));
+  }
+  function move(idx: number, dir: -1 | 1) {
+    const target = idx + dir;
+    if (target < 0 || target >= value.length) return;
+    const next = [...value];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onChange(next);
+  }
+  async function handleImage(idx: number, file: File) {
+    setUploadingIdx(idx);
+    try {
+      const url = await uploadImage(file, IMAGE_PRESETS.hero);
+      update(idx, { imageUrl: url });
+    } finally {
+      setUploadingIdx(null);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {value.map((s, i) => (
+        <div key={i} className="rounded-lg bg-gray-50 p-2">
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col">
+              <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">▲</button>
+              <button type="button" onClick={() => move(i, 1)} disabled={i === value.length - 1} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">▼</button>
+            </div>
+            <label className="relative flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-gray-200">
+              {s.imageUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={s.imageUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <Upload className="h-3.5 w-3.5 text-gray-400" />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleImage(i, e.target.files[0])}
+              />
+            </label>
+            {uploadingIdx === i && <span className="text-[10px] text-gray-400">Upload…</span>}
+            <input
+              placeholder="Texte du bouton (ex: Acheter)"
+              value={s.ctaLabel || ""}
+              onChange={(e) => update(i, { ctaLabel: e.target.value })}
+              className="w-40 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+            />
+            <input
+              placeholder="Lien du bouton (ex: /produit/...)"
+              value={s.ctaLink || ""}
+              onChange={(e) => update(i, { ctaLink: e.target.value })}
+              className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+            />
+            <div className="flex flex-shrink-0 items-center rounded-lg border border-gray-200 bg-white">
+              {CTA_ALIGN_OPTIONS.map(({ key, icon: Icon, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  title={label}
+                  onClick={() => update(i, { ctaAlign: key })}
+                  className={`p-1.5 ${(s.ctaAlign || "center") === key ? "bg-[var(--primary)] text-white" : "text-gray-400 hover:text-gray-700"}`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => remove(i)} className="text-red-600">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...value, { imageUrl: "" }])}
+        className="flex items-center gap-1 text-xs font-semibold uppercase text-[var(--primary)] hover:underline"
+      >
+        <Plus className="h-3 w-3" /> Ajouter une photo
       </button>
     </div>
   );

@@ -11,6 +11,9 @@ export type Settings = {
   heroTitle?: string | null;
   heroSubtitle?: string | null;
   heroImageUrl?: string | null;
+  heroSlides: { imageUrl: string; ctaLabel?: string; ctaLink?: string; ctaAlign?: "left" | "center" | "right" }[];
+  heroSlidesEnabled: boolean;
+  heroSlidesIntervalMs: number;
   email?: string | null;
   phone?: string | null;
   zone?: string | null;
@@ -50,6 +53,9 @@ function fromDbSettings(row: any): Settings {
     heroTitle: row.hero_title,
     heroSubtitle: row.hero_subtitle,
     heroImageUrl: row.hero_image_url,
+    heroSlides: row.hero_slides || [],
+    heroSlidesEnabled: row.hero_slides_enabled ?? true,
+    heroSlidesIntervalMs: row.hero_slides_interval_ms ?? 5000,
     email: row.email,
     phone: row.phone,
     zone: row.zone,
@@ -90,6 +96,9 @@ const FIELD_MAP: Record<string, string> = {
   heroTitle: "hero_title",
   heroSubtitle: "hero_subtitle",
   heroImageUrl: "hero_image_url",
+  heroSlides: "hero_slides",
+  heroSlidesEnabled: "hero_slides_enabled",
+  heroSlidesIntervalMs: "hero_slides_interval_ms",
   adminPassword: "admin_password",
   openWeekdays: "open_weekdays",
   closedDates: "closed_dates",

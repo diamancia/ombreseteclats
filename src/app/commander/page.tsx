@@ -22,7 +22,7 @@ export default async function CommanderPage() {
         categoryBubbles={settings.categoryBubbles}
       />
       <Cart />
-      <main className="min-h-screen bg-[var(--background)] py-16">
+      <main className="min-h-screen bg-[var(--background)] py-10">
         <div className="mx-auto max-w-3xl px-6">
           <div className="mb-10 flex flex-col items-center">
             <h1 className="font-serif text-5xl tracking-wider">COMMANDER</h1>

@@ -38,16 +38,14 @@ export interface SiteConfig {
     // Accent réservé à la collection Femme — cahier des charges 4.6 (section 5 : pas de thème
     // clair global, l'or rosé n'est utilisé que localement sur les blocs/badges Femme).
     roseGold: string;
-    // Variante claire du même thème (bouton clair/sombre) — même famille de couleurs
-    // (ivoire chaud / champagne), inversée plutôt qu'une palette différente.
-    light: {
-      background: string;
-      foreground: string;
-      primary: string;
-      primaryDark: string;
-      accent: string;
-      muted: string;
-    };
+    // Blanc pur des cartes (produit, avis) — se détache du fond crème sans ombre portée.
+    card: string;
+    // Doré très pâle — bandeau d'annonces, pastilles d'initiales. Un aplat, pas une bordure.
+    goldPale: string;
+    // Texte secondaire (légendes, icônes du header) — lisible sans concurrencer --foreground.
+    inkSoft: string;
+    // Texte tertiaire (sur-titres, copyright, chevrons) — présent mais volontairement en retrait.
+    inkFaint: string;
   };
   meta: { title: string; description: string };
   hero: { defaultTitle: string; defaultSubtitle: string; defaultImageUrl: string };
@@ -93,22 +91,21 @@ export const siteConfig: SiteConfig = {
     storagePrefix: "ombre-eclats",
   },
 
+  // Palette claire uniquement (mode sombre retiré), accordée sur design/mockup-mobile-flow.html :
+  // papier crème chaud, encre brun-noir, or et or foncé. Le site est intégralement clair, header
+  // et Hero compris.
   theme: {
-    background: "#0a0a0a",     // noir absolu (comme le logo)
-    foreground: "#f5f1e8",     // crème légèrement chaud (lisible, luxe)
-    primary: "#c9c0ad",        // argenté chaud / champagne (boutons, liens)
-    primaryDark: "#e8dfc8",    // hover plus clair
-    accent: "#2a2a2a",          // gris très foncé (bordures, cartes)
-    muted: "#141414",           // noir charbon (sections, cards)
+    background: "#faf7f0",      // --paper
+    foreground: "#2a2519",      // --ink
+    primary: "#a3835a",         // --gold
+    primaryDark: "#8a6d47",     // --gold-deep : prix, CTA, liens "voir tout"
+    accent: "#e6ddc8",          // --line : toutes les bordures
+    muted: "#f6f1e6",           // lavis de section — volontairement plus clair que goldPale
     roseGold: "#C9A08A",        // or rosé discret — réservé à la collection Femme
-    light: {
-      background: "#f7f3ea",    // ivoire chaud (même teinte que le "foreground" sombre, inversé)
-      foreground: "#1c1712",    // noir chaud, lisible sur fond clair
-      primary: "#8a7550",       // champagne assombri pour rester lisible sur fond clair
-      primaryDark: "#6e5c3e",
-      accent: "#e9e1cd",
-      muted: "#f0e9d9",
-    },
+    card: "#ffffff",
+    goldPale: "#f1e6d0",
+    inkSoft: "#6b6350",
+    inkFaint: "#a49c86",
   },
 
   meta: {

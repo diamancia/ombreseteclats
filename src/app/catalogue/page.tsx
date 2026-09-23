@@ -11,6 +11,7 @@ import MetalSlider from "@/components/MetalSlider";
 import PriceRangeSlider from "@/components/PriceRangeSlider";
 import { listProducts, listBestSellerProducts, listCategories, getSettings } from "@/lib/db";
 import { DEFAULT_METAL_TYPES } from "@/lib/metals";
+import { STONE_NATURES, STONE_NATURE_LABELS, isStoneNature } from "@/lib/stones";
 import { effectivePrice } from "@/lib/pricing";
 import { siteConfig } from "@/site.config";
 
@@ -20,6 +21,7 @@ type CatalogueParams = {
   cat?: string;
   genre?: string;
   metal?: string;
+  pierre?: string;
   min?: number;
   max?: number;
   bestseller?: boolean;
@@ -32,6 +34,7 @@ function catalogueHref(params: CatalogueParams) {
   if (params.cat) qs.set("cat", params.cat);
   if (params.genre) qs.set("genre", params.genre);
   if (params.metal) qs.set("metal", params.metal);
+  if (params.pierre) qs.set("pierre", params.pierre);
   if (params.min !== undefined) qs.set("min", String(params.min));
   if (params.max !== undefined) qs.set("max", String(params.max));
   if (params.bestseller) qs.set("bestseller", "1");
@@ -53,13 +56,16 @@ async function loadData(bestsellerMode: boolean) {
 export default async function CataloguePage({
   searchParams,
 }: {
-  searchParams: Promise<{ cat?: string; genre?: string; metal?: string; min?: string; max?: string; bestseller?: string; promo?: string; new?: string }>;
+  searchParams: Promise<{ cat?: string; genre?: string; metal?: string; pierre?: string; min?: string; max?: string; bestseller?: string; promo?: string; new?: string }>;
 }) {
   const sp = await searchParams;
   const bestsellerMode = sp.bestseller === "1";
   const promoMode = sp.promo === "1";
   const newMode = sp.new === "1";
-  const carry = { bestseller: bestsellerMode, promo: promoMode, isNew: newMode };
+  const stoneFilter = isStoneNature(sp.pierre) ? sp.pierre : undefined;
+  // Filtres transportés d'un clic à l'autre : sélectionner une catégorie ne doit pas faire
+  // perdre la pierre ou le mode best-sellers déjà actifs.
+  const carry = { bestseller: bestsellerMode, promo: promoMode, isNew: newMode, pierre: stoneFilter };
   const { products, categories, settings } = await loadData(bestsellerMode);
   const metalTypes = settings.metalTypes?.length ? settings.metalTypes : DEFAULT_METAL_TYPES;
 
@@ -110,6 +116,12 @@ export default async function CataloguePage({
       removeHref: catalogueHref({ ...carry, cat: sp.cat, genre: sp.genre }),
     });
   }
+  if (stoneFilter) {
+    chips.push({
+      label: STONE_NATURE_LABELS[stoneFilter],
+      removeHref: catalogueHref({ ...carry, pierre: undefined, cat: sp.cat, genre: sp.genre, metal: sp.metal }),
+    });
+  }
   if (priceActive) {
     chips.push({
       label: `${priceMin}€ – ${priceMax}€`,
@@ -117,19 +129,20 @@ export default async function CataloguePage({
     });
   }
   if (bestsellerMode) {
-    chips.push({ label: "Best-sellers", removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal, promo: promoMode, isNew: newMode }) });
+    chips.push({ label: "Best-sellers", removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal, pierre: stoneFilter, promo: promoMode, isNew: newMode }) });
   }
   if (promoMode) {
-    chips.push({ label: "En réduction", removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal, bestseller: bestsellerMode, isNew: newMode }) });
+    chips.push({ label: "En réduction", removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal, pierre: stoneFilter, bestseller: bestsellerMode, isNew: newMode }) });
   }
   if (newMode) {
-    chips.push({ label: "Nouveautés", removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal, bestseller: bestsellerMode, promo: promoMode }) });
+    chips.push({ label: "Nouveautés", removeHref: catalogueHref({ cat: sp.cat, genre: sp.genre, metal: sp.metal, pierre: stoneFilter, bestseller: bestsellerMode, promo: promoMode }) });
   }
 
   const filtered = products
     .filter((p: any) => !matchingCatIds || matchingCatIds.includes(p.category?._id))
     .filter((p: any) => !sp.genre || (p.gender || "homme") === sp.genre)
     .filter((p: any) => !sp.metal || p.metal === sp.metal)
+    .filter((p: any) => !stoneFilter || p.stone?.nature === stoneFilter)
     .filter((p: any) => !promoMode || effectivePrice(p).discountPct != null)
     .filter((p: any) => !newMode || p.isNew)
     .filter((p: any) => {
@@ -149,7 +162,7 @@ export default async function CataloguePage({
         categoryBubbles={settings.categoryBubbles}
       />
       <Cart />
-      <main className="min-h-screen bg-[var(--background)] py-16">
+      <main className="min-h-screen bg-[var(--background)] py-10">
         <div className="mx-auto max-w-7xl px-6">
           <div className="mb-10 flex flex-col items-center">
             <h1 className="font-serif text-5xl tracking-wider">NOTRE BOUTIQUE</h1>
@@ -235,6 +248,29 @@ export default async function CataloguePage({
               )}
             </div>
 
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/60">Pierre</p>
+              <div className="flex flex-wrap gap-2">
+                {[undefined, ...STONE_NATURES].map((nature) => {
+                  const active = stoneFilter === nature;
+                  const count = nature ? products.filter((p: any) => p.stone?.nature === nature).length : 0;
+                  return (
+                    <Link
+                      key={nature ?? "toutes"}
+                      href={catalogueHref({ ...carry, pierre: nature, cat: sp.cat, genre: sp.genre, metal: sp.metal, min: sp.min ? Number(sp.min) : undefined, max: sp.max ? Number(sp.max) : undefined })}
+                      className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors ${
+                        active
+                          ? "bg-[var(--rose-gold)] text-white"
+                          : "border border-[var(--rose-gold)] text-[var(--rose-gold)] hover:bg-[var(--rose-gold)] hover:text-white"
+                      }`}
+                    >
+                      {nature ? `${STONE_NATURE_LABELS[nature]} (${count})` : "Toutes les pierres"}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex flex-wrap items-start gap-x-10 gap-y-5">
               <div>
                 <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--foreground)]/60">Métal</p>
@@ -259,7 +295,7 @@ export default async function CataloguePage({
           </FilterPanel>
 
           {filtered.length === 0 ? (
-            <p className="py-20 text-center text-[var(--foreground)]/60">Aucun produit dans cette catégorie</p>
+            <p className="py-14 text-center text-[var(--foreground)]/60">Aucun produit dans cette catégorie</p>
           ) : (
             <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {filtered.map((p: any) => (
