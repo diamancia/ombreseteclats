@@ -156,10 +156,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Ancre du ruban "Boutique" — toujours présente (contrairement aux sections produit,
-            conditionnées aux données), pour que le ruban ait toujours une cible. */}
-        <div id="boutique" className="scroll-mt-24" />
-
         {/* Bannière publicitaire — cahier des charges 4.10, activable sans redéploiement */}
         {settings.bannerEnabled && settings.bannerUrl && (
           <section className="overflow-hidden">
